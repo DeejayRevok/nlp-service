@@ -36,7 +36,7 @@ jobs:
           sudo rm -f /swapfile
           sudo apt clean
       - name: Build the docker image
-        run: docker-compose -f docker/docker-compose.yml build nlp-service && docker tag nlp-service:latest djrevok/nlp-service:latest
+        run: docker build -t djrevok/nlp-service:latest .
       - name: Login to docker hub
         if: github.ref == 'refs/heads/develop'
         uses: actions-hub/docker/login@master
@@ -76,7 +76,7 @@ jobs:
           token: ${{ secrets.CODECOV_TOKEN }}
           file: coverage_nlp_celery_worker.xml
       - name: Build the docker image
-        run: docker-compose -f docker/docker-compose.yml build nlp-celery-worker && docker tag nlp-celery-worker:latest djrevok/nlp-celery-worker:latest
+        run: docker build -t djrevok/nlp-celery-worker:latest .
       - name: Login to docker hub
         if: github.ref == 'refs/heads/develop'
         uses: actions-hub/docker/login@master
