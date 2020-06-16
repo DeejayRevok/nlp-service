@@ -1,5 +1,5 @@
 FROM python:3.8-buster
-COPY ./nlp_service /app/nlp_service
+COPY ./ /app/nlp_service
 
 WORKDIR /app
 
