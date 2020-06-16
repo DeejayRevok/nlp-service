@@ -43,7 +43,7 @@ class TestNlpService(TestCase):
         self.assertListEqual(nlp_doc.named_entities, [self.TEST_ENTITY])
         self.assertListEqual(nlp_doc.sentences, self.TEST_SENTENCES)
 
-    @patch('services.publish_hydrated_new')
+    @patch('services.nlp_service.publish_hydrated_new')
     @patch('services.nlp_service.hydrate_new_with_entities')
     @patch('services.nlp_service.Pipeline')
     @async_test
