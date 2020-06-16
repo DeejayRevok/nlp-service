@@ -1,6 +1,8 @@
 # nlp-service
 News service NLP microservices
 
+![NLP Services](https://github.com/DeejayRevok/nlp-service/workflows/News%20Service/badge.svg?branch=develop)
+
 ### Local running
 
 Run the parent's repo dev docker compose.
