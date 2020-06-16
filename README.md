@@ -1,7 +1,9 @@
 # nlp-service
 News service NLP microservices
 
-![NLP Services](https://github.com/DeejayRevok/nlp-service/workflows/News%20Service/badge.svg?branch=develop)
+![NLP Services](https://github.com/DeejayRevok/nlp-service/workflows/NLP%20Services/badge.svg)
+[![codecov](https://codecov.io/gh/DeejayRevok/nlp-service/branch/develop/graph/badge.svg?token=Iy48oweqr3)](https://codecov.io/gh/DeejayRevok/nlp-service)
+[![Quality Gate Status](https://sonarcloud.io/api/project_badges/measure?project=DeejayRevok_nlp-service&metric=alert_status)](https://sonarcloud.io/dashboard?id=DeejayRevok_nlp-service)
 
 ### Local running
 
