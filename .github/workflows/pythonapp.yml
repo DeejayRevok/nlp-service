@@ -1,4 +1,4 @@
-name: News Service
+name: NLP Services
 
 on: [push]
 
