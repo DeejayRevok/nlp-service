@@ -22,4 +22,4 @@ RUN pip install -r ./nlp_service/requirements.txt
 COPY ./tools_config/metricbeat.yml /etc/metricbeat/metricbeat.yml
 
 EXPOSE 8082
-CMD service metricbeat start && export PYTHONPATH=${PYTHONPATH}:/app && python ./nlp_service/webapp/main.py -p DOCKER
+CMD service metricbeat start && export PYTHONPATH=${PYTHONPATH}:/app/nlp_service && python ./nlp_service/webapp/main.py -p DOCKER

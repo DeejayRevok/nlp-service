@@ -13,4 +13,4 @@ RUN pip install -r nlp_service/requirements_celery.txt
 
 COPY ./tools_config/metricbeat-celery.yml /etc/metricbeat/metricbeat.yml
 
-CMD service metricbeat start && export PYTHONPATH=${PYTHONPATH}:/app && python ./nlp_service/nlp_celery_worker/celery_app.py -p DOCKER
+CMD service metricbeat start && export PYTHONPATH=${PYTHONPATH}:/app/nlp_service && python ./nlp_service/nlp_celery_worker/celery_app.py -p DOCKER
