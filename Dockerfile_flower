@@ -14,4 +14,4 @@ RUN pip install -r nlp_service/requirements_flower.txt
 COPY ./tools_config/metricbeat-flower.yml /etc/metricbeat/metricbeat.yml
 
 EXPOSE 5555
-CMD service metricbeat start && export PYTHONPATH=${PYTHONPATH}:/app && python ./nlp_service/nlp_celery_worker/flower_app.py -p DOCKER
+CMD service metricbeat start && export PYTHONPATH=${PYTHONPATH}:/app/nlp_service && python ./nlp_service/nlp_celery_worker/flower_app.py -p DOCKER
