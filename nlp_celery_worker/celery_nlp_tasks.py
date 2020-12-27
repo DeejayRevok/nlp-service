@@ -84,10 +84,32 @@ def hydrate_new_with_entities(new_nlp_doc: Tuple[dict, dict]):
     if nlp_doc is not None:
         new = New(**new)
         new.entities = list(
-            set(map(lambda entity: NamedEntity(text=entity[0].lower(), type=entity[1]), nlp_doc['named_entities'])))
+            set(map(lambda entity: NamedEntity(text=entity[0], type=entity[1]), nlp_doc['named_entities'])))
         return dict(new), nlp_doc
     else:
         LOGGER.warning('Processed new content is missing, skipping entities hydrate')
+        return None
+
+
+@CELERY_APP.app.task(name='hydrate_new_noun_chunks')
+def hydrate_new_with_noun_chunks(new_nlp_doc: Tuple[dict, dict]):
+    """
+    Hydrate the input new with noun chunks
+
+    Args:
+        new_nlp_doc: new to hydrate, NLP data about the new content
+
+    Returns: new hydrated with named entities, processed new content
+
+    """
+    new, nlp_doc = new_nlp_doc
+    LOGGER.info('Hydrating new %s with noun chunks', new['title'])
+    if nlp_doc is not None:
+        new = New(**new)
+        new.noun_chunks = nlp_doc['noun_chunks']
+        return dict(new), nlp_doc
+    else:
+        LOGGER.warning('Processed new content is missing, skipping noun chunks hydrate')
         return None
 
 

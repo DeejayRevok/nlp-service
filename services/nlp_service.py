@@ -1,26 +1,29 @@
 """
 NLP functions module
 """
+import spacy
+from spacy.tokens import Doc
+
 from news_service_lib.models import NLPDoc
-from stanza import Pipeline, Document
 
 from nlp_celery_worker.celery_nlp_tasks import hydrate_new_with_entities, publish_hydrated_new, \
-    process_content, hydrate_new_summary, hydrate_new_sentiment
+    process_content, hydrate_new_summary, hydrate_new_sentiment, hydrate_new_with_noun_chunks
 
 
 class NlpService:
     """
     NLP service implementation
     """
-    CELERY_NLP_PIPELINE = [process_content, hydrate_new_with_entities, hydrate_new_summary, hydrate_new_sentiment]
+    CELERY_NLP_PIPELINE = [process_content, hydrate_new_with_entities, hydrate_new_with_noun_chunks,
+                           hydrate_new_summary, hydrate_new_sentiment]
 
     def __init__(self):
         """
         Initialize the NLP service loading the language model
         """
-        self._spanish_language = Pipeline('es')
+        self._spanish_language = spacy.load('es_core_news_sm')
 
-    async def _process_text(self, text: str) -> Document:
+    async def _process_text(self, text: str) -> Doc:
         """
         Process a text with the language model
 
@@ -43,8 +46,9 @@ class NlpService:
 
         """
         doc = await self._process_text(text)
-        return NLPDoc(sentences=[sentence.text for sentence in doc.sentences],
-                      named_entities=[(entity.text, entity.type) for entity in doc.entities])
+        return NLPDoc(sentences=[str(sentence) for sentence in doc.sents],
+                      named_entities=[(str(entity), entity.label_) for entity in doc.ents],
+                      noun_chunks=[str(noun_chunk) for noun_chunk in doc.noun_chunks if len(noun_chunk.ents) == 0])
 
     async def hydrate_new(self, new: dict):
         """

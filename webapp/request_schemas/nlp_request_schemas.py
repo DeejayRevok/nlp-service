@@ -22,3 +22,4 @@ class PutHydrateNewSchema(Schema):
     summary = fields.Str(description='New summary', allow_none=True)
     sentiment = fields.Float(description='New content sentiment score', allow_none=True)
     entities = fields.List(fields.Dict, description='New named entities', allow_none=True)
+    noun_chunks = fields.List(fields.String, description='New noun chunks', allow_none=True)
