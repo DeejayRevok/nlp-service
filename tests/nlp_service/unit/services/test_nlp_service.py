@@ -19,33 +19,41 @@ class TestNlpService(TestCase):
     TEST_ENTITY = ('test_entity_text', 'test_entity_type')
     TEST_SENTENCES = ['test_sentence_1', 'test_sentence_2']
 
-    @patch('services.nlp_service.Pipeline')
+    @patch('services.nlp_service.spacy')
     @async_test
-    async def test_process_text(self, mocked_nlp_pipeline):
+    async def test_process_text(self, mocked_spacy):
         """
         Test process text returns the NLP processed doc with the sentences and the named entities extracted from
         the text
         """
+        nlp_mock = MagicMock()
         mock_first_sentence = MagicMock()
-        mock_first_sentence.text = self.TEST_SENTENCES[0]
+        mock_first_sentence.__str__.return_value = self.TEST_SENTENCES[0]
         mock_second_sentence = MagicMock()
-        mock_second_sentence.text = self.TEST_SENTENCES[1]
+        mock_second_sentence.__str__.return_value = self.TEST_SENTENCES[1]
 
         mock_entity = MagicMock()
-        mock_entity.text = self.TEST_ENTITY[0]
-        mock_entity.type = self.TEST_ENTITY[1]
+        mock_entity.__str__.return_value = self.TEST_ENTITY[0]
+        mock_entity.label_ = self.TEST_ENTITY[1]
+
+        doc_mock = MagicMock()
+        nlp_mock.configure_mock(name='doc_mock')
+        doc_mock.sents = [mock_first_sentence, mock_second_sentence]
+        doc_mock.ents = [mock_entity]
+
+        nlp_mock.configure_mock(name='nlp_mock')
+        nlp_mock.return_value = doc_mock
+        mocked_spacy.load.return_value = nlp_mock
 
         nlp_service = NlpService()
-        mocked_nlp_pipeline()().entities = [mock_entity]
-        mocked_nlp_pipeline()().sentences = [mock_first_sentence, mock_second_sentence]
         nlp_doc = await nlp_service.get_processed_text(self.TEST_TEXT)
-        mocked_nlp_pipeline().assert_called_with(self.TEST_TEXT)
+        nlp_mock.assert_called_with(self.TEST_TEXT)
         self.assertListEqual(nlp_doc.named_entities, [self.TEST_ENTITY])
         self.assertListEqual(nlp_doc.sentences, self.TEST_SENTENCES)
 
     @patch('services.nlp_service.publish_hydrated_new')
     @patch('services.nlp_service.hydrate_new_with_entities')
-    @patch('services.nlp_service.Pipeline')
+    @patch('services.nlp_service.spacy')
     @async_test
     async def test_hydrate_new(self, _, mocked_hydrate_new_entities, __):
         """

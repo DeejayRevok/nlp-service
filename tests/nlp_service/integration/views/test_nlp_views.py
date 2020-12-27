@@ -30,7 +30,9 @@ async def mock_auth_middleware(_, handler):
 
 
 class TestNlpViews(AioHTTPTestCase):
-    TEST_NLP_DOC = NLPDoc(sentences=['test_sentence'], named_entities=[('test_entity_text', 'test_entity_type')])
+    TEST_NLP_DOC = NLPDoc(sentences=['test_sentence'],
+                          named_entities=[('test_entity_text', 'test_entity_type')],
+                          noun_chunks=['Test noun chunks'])
     TEST_NEW = New(title='test_title', content='test_content', date=232421.0, source='test_source', summary='',
                    sentiment=0.0)
 
@@ -95,6 +97,7 @@ class TestNlpViews(AioHTTPTestCase):
         dict_response = dict(self.TEST_NEW)
         del dict_response['hydrated']
         del dict_response['entities']
+        del dict_response['noun_chunks']
         self.mock_nlp_service.hydrate_new.assert_called_with(dict_response)
 
 

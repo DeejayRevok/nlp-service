@@ -15,9 +15,11 @@ from nlp_celery_worker.celery_nlp_tasks import initialize_worker, hydrate_new_wi
 
 class TestCeleryTasks(TestCase):
     TEST_NEW = New(title='test_title', content='test_content', source='test_source', date=123123.0)
-    TEST_ENTITIES = [NamedEntity(text='test_entity_text', type='test_entity_type')]
+    TEST_ENTITIES = [NamedEntity(text='Test_ENTITY_text', type='test_entity_type')]
     TEST_NAMED_ENTITIES = [('Test_ENTITY_text', 'test_entity_type'), ('Test_ENTITY_text', 'test_entity_type')]
-    TEST_PROCESSED_TEXT = NLPDoc(sentences=['test_sentence_1', 'test_sentence_2'], named_entities=TEST_NAMED_ENTITIES)
+    TEST_PROCESSED_TEXT = NLPDoc(sentences=['test_sentence_1', 'test_sentence_2'],
+                                 named_entities=TEST_NAMED_ENTITIES,
+                                 noun_chunks=['test_noun_chunk'])
     TEST_SUMMARY = 'Test summary'
     TEST_SENTIMENT = 0.4
 
