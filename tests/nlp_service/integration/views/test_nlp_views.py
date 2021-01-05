@@ -33,8 +33,8 @@ class TestNlpViews(AioHTTPTestCase):
     TEST_NLP_DOC = NLPDoc(sentences=['test_sentence'],
                           named_entities=[('test_entity_text', 'test_entity_type')],
                           noun_chunks=['Test noun chunks'])
-    TEST_NEW = New(title='test_title', content='test_content', date=232421.0, source='test_source', summary='',
-                   sentiment=0.0)
+    TEST_NEW = New(title='test_title', url='https://test.test', content='test_content', date=232421.0,
+                   source='test_source', summary='', sentiment=0.0)
 
     @patch('services.nlp_service.NlpService')
     @patch('elasticapm.middleware.ElasticAPM')
