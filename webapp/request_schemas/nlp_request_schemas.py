@@ -16,6 +16,7 @@ class PutHydrateNewSchema(Schema):
     Class that describes the schema of the put hydrate new request
     """
     title = fields.Str(description='New title')
+    url = fields.Str(description='New url')
     content = fields.Str(description='New text content')
     source = fields.Str(description='New source')
     date = fields.Float(description='New date timestamp')
