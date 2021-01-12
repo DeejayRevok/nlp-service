@@ -8,8 +8,7 @@ pylint-fail-under==0.3.0
 coverage==5.0.3
 psutil==5.7.0
 python-logstash==0.4.6
-celery==4.4.2
-flower==0.9.4
+celery
 pika==1.1.0
 nltk==3.5
 networkx==2.4

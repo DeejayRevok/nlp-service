@@ -14,7 +14,11 @@ from nlp_celery_worker.celery_nlp_tasks import initialize_worker, hydrate_new_wi
 
 
 class TestCeleryTasks(TestCase):
-    TEST_NEW = New(title='test_title', url='https://test.test', content='test_content', source='test_source', date=123123.0)
+    """
+    Celery tasks test cases implementation
+    """
+    TEST_NEW = New(title='test_title', url='https://test.test', content='test_content', source='test_source',
+                   date=123123.0)
     TEST_ENTITIES = [NamedEntity(text='Test_ENTITY_text', type='test_entity_type')]
     TEST_NAMED_ENTITIES = [('Test_ENTITY_text', 'test_entity_type'), ('Test_ENTITY_text', 'test_entity_type')]
     TEST_PROCESSED_TEXT = NLPDoc(sentences=['test_sentence_1', 'test_sentence_2'],
@@ -108,9 +112,9 @@ class TestCeleryTasks(TestCase):
         mocked_connection().channel.return_value = channel_mock
         publish_hydrated_new(dict(self.TEST_NEW))
 
-        channel_mock.exchange_declare.assert_called_with(exchange='new-updates', exchange_type='fanout', durable=True)
+        channel_mock.exchange_declare.assert_called_with(exchange='news-internal-exchange', exchange_type='fanout', durable=True)
         self.TEST_NEW.hydrated = True
-        channel_mock.basic_publish.assert_called_with(exchange='new-updates', routing_key='',
+        channel_mock.basic_publish.assert_called_with(exchange='news-internal-exchange', routing_key='',
                                                       body=json.dumps(dict(self.TEST_NEW)))
 
         channel_mock.close.assert_called_once()
