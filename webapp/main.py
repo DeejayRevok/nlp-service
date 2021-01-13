@@ -7,7 +7,6 @@ from news_service_lib import server_runner, get_uaa_service, uaa_auth_middleware
 
 from nlp_celery_worker.celery_app import CELERY_APP
 from log_config import LOG_CONFIG, get_logger
-from nlp_celery_worker.celery_nlp_tasks import initialize_worker
 from services.nlp_service import NlpService
 from webapp.definitions import API_VERSION, CONFIG_PATH, health_check
 from webapp.middlewares import error_middleware
@@ -35,9 +34,6 @@ def init_nlp_service(app: Application) -> Application:
     CELERY_APP.configure(task_queue_name='nlp-worker',
                          broker_config=app['config'].get_section('RABBIT'),
                          worker_concurrency=int(app['config'].get('CELERY', 'concurrency')))
-
-    for _ in range(int(app['config'].get('CELERY', 'concurrency'))):
-        initialize_worker.delay(app['config'].get_section('SELF_REMOTE'), app['config'].get_section('RABBIT'))
 
     app.middlewares.append(error_middleware)
     app.middlewares.append(uaa_auth_middleware)

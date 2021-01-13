@@ -1,6 +1,8 @@
 """
 Main nlp celery worker module
 """
+from celery.concurrency import asynpool
+
 from news_service_lib import profile_args_parser, Configuration, ConfigProfile, add_logstash_handler
 from news_service_lib.base_celery_app import BaseCeleryApp
 
@@ -10,6 +12,7 @@ from nlp_celery_worker.nlp_helpers.summarizer import initialize_summarizer
 from webapp.definitions import CONFIG_PATH
 
 
+asynpool.PROC_ALIVE_TIMEOUT = 60.0
 CELERY_APP = BaseCeleryApp('Nlp service worker', ['nlp_celery_worker.celery_nlp_tasks'])
 
 if __name__ == '__main__':
