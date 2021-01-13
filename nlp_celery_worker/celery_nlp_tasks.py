@@ -3,47 +3,47 @@ Celery tasks implementation module
 """
 import asyncio
 import json
-from typing import Tuple
+import os
+from typing import Tuple, Optional
 
-from news_service_lib import NlpServiceService
+from celery.signals import worker_process_init
+
+from news_service_lib import NlpServiceService, ConfigProfile, Configuration
+from news_service_lib.messaging import ExchangePublisher
 from news_service_lib.models import New, NamedEntity
-from pika import BlockingConnection, ConnectionParameters, PlainCredentials
 
 from log_config import get_logger
 from nlp_celery_worker.celery_app import CELERY_APP
 from nlp_celery_worker.nlp_helpers.sentiment_analyzer import SentimentAnalyzer
 from nlp_celery_worker.nlp_helpers.summarizer import generate_summary_from_sentences
+from webapp.definitions import CONFIG_PATH
 
 LOGGER = get_logger()
-NLP_REMOTE_SERVICE = None
-QUEUE_PROVIDER_CONFIG = None
-SENTIMENT_ANALYZER = None
+NLP_REMOTE_SERVICE: Optional[NlpServiceService] = None
+EXCHANGE_PUBLISHER: Optional[ExchangePublisher] = None
+SENTIMENT_ANALYZER: Optional[SentimentAnalyzer] = None
 
 
-@CELERY_APP.app.task(name='initialize_worker')
-def initialize_worker(nlp_service_config: dict, queue_config: dict):
+@worker_process_init.connect()
+def initialize_worker(*_, **__):
     """
     Initialize the celery worker global variables
-
-    Args:
-        nlp_service_config: configuration of the nlp microservice
-        queue_config: queue provider configuration
-
     """
-    global NLP_REMOTE_SERVICE, QUEUE_PROVIDER_CONFIG, SENTIMENT_ANALYZER
+    global NLP_REMOTE_SERVICE, EXCHANGE_PUBLISHER, SENTIMENT_ANALYZER
     LOGGER.info('Initializing worker')
-    if NLP_REMOTE_SERVICE is None:
-        NLP_REMOTE_SERVICE = NlpServiceService(**nlp_service_config)
-    else:
-        LOGGER.info('Nlp service remote interface already initialized')
-    if QUEUE_PROVIDER_CONFIG is None:
-        QUEUE_PROVIDER_CONFIG = queue_config
-    else:
-        LOGGER.info('Queue config already initialized')
-    if SENTIMENT_ANALYZER is None:
-        SENTIMENT_ANALYZER = SentimentAnalyzer()
-    else:
-        LOGGER.info('Sentiment analyzer already initialized')
+
+    config_profile = ConfigProfile[os.environ.get('PROFILE')] if 'PROFILE' in os.environ else ConfigProfile.LOCAL
+    configuration = Configuration(config_profile, CONFIG_PATH)
+
+    NLP_REMOTE_SERVICE = NlpServiceService(**configuration.get_section('SELF_REMOTE'))
+
+    EXCHANGE_PUBLISHER = ExchangePublisher(**configuration.get_section('RABBIT'),
+                                           exchange='news-internal-exchange',
+                                           logger=LOGGER)
+    EXCHANGE_PUBLISHER.connect()
+    EXCHANGE_PUBLISHER.initialize()
+
+    SENTIMENT_ANALYZER = SentimentAnalyzer()
 
 
 @CELERY_APP.app.task(name='process_content')
@@ -171,25 +171,16 @@ def publish_hydrated_new(new: dict):
         new: new to publish
 
     """
-    global QUEUE_PROVIDER_CONFIG
+    global EXCHANGE_PUBLISHER
     if new is not None:
         LOGGER.info('Publishing hydrated new %s', new['title'])
-        if QUEUE_PROVIDER_CONFIG is not None:
+        if EXCHANGE_PUBLISHER is not None:
             LOGGER.info('Queue connection initialized, publishing...')
 
             new['hydrated'] = True
-            connection = BlockingConnection(
-                ConnectionParameters(host=QUEUE_PROVIDER_CONFIG['host'],
-                                     port=int(QUEUE_PROVIDER_CONFIG['port']),
-                                     credentials=PlainCredentials(QUEUE_PROVIDER_CONFIG['user'],
-                                                                  QUEUE_PROVIDER_CONFIG['password'])))
-            channel = connection.channel()
-            channel.exchange_declare(exchange='news-internal-exchange', exchange_type='fanout', durable=True)
-            channel.basic_publish(exchange='news-internal-exchange', routing_key='', body=json.dumps(dict(new)))
+            EXCHANGE_PUBLISHER(dict(new))
 
             LOGGER.info('New published')
-            channel.close()
-            connection.close()
         else:
             LOGGER.warning('Queue connection configuration not initialized, skipping publish...')
     else:

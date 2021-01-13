@@ -18,13 +18,12 @@ class TestMain(unittest.TestCase):
     TEST_CONFIG = dict(protocol='test', host='test', port=0)
 
     # noinspection PyTypeHints
-    @patch('webapp.main.initialize_worker')
     @patch('webapp.main.CELERY_APP')
     @patch('webapp.main.NlpService')
     @patch.object(Configuration, 'get')
     @patch('webapp.main.health_check')
     @patch('webapp.main.nlp_view')
-    def test_init_app(self, view_mock, _, config_mock, __, celery_app_mock, init_worker_task_mock):
+    def test_init_app(self, view_mock, _, config_mock, __, celery_app_mock):
         """
         Test if the initialization of the app initializes all the required services, adds the required middlewares,
         setups the required routes, configures the celery app and initializes all the celery worker subprocesses
@@ -36,7 +35,6 @@ class TestMain(unittest.TestCase):
         app = init_nlp_service(base_app)
         view_mock.setup_routes.assert_called_once()
         celery_app_mock.configure.assert_called_once()
-        self.assertEqual(len(init_worker_task_mock.mock_calls), 3)
         self.assertIsNotNone(app['nlp_service'])
         self.assertIsNotNone(app['uaa_service'])
         self.assertIn(error_middleware, app.middlewares)
