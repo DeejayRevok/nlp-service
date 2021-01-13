@@ -2,7 +2,6 @@
 Celery tasks implementation module
 """
 import asyncio
-import json
 import os
 from typing import Tuple, Optional
 
