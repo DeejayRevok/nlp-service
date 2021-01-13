@@ -36,11 +36,12 @@ def initialize_worker(*_, **__):
 
     NLP_REMOTE_SERVICE = NlpServiceService(**configuration.get_section('SELF_REMOTE'))
 
-    EXCHANGE_PUBLISHER = ExchangePublisher(**configuration.get_section('RABBIT'),
+    exchange_publisher = ExchangePublisher(**configuration.get_section('RABBIT'),
                                            exchange='news-internal-exchange',
                                            logger=LOGGER)
-    EXCHANGE_PUBLISHER.connect()
-    EXCHANGE_PUBLISHER.initialize()
+    exchange_publisher.connect()
+    exchange_publisher.initialize()
+    EXCHANGE_PUBLISHER = exchange_publisher
 
     SENTIMENT_ANALYZER = SentimentAnalyzer()
 
