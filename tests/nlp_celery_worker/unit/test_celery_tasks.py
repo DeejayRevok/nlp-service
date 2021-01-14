@@ -1,6 +1,7 @@
 """
 Celery tasks unit tests module
 """
+import json
 from unittest import TestCase
 from unittest.mock import patch, MagicMock
 
@@ -29,11 +30,9 @@ class TestCeleryTasks(TestCase):
     TEST_NLP_SERVICE_CONFIG = dict(protocol='test_protocol', host='test_host', port='0')
     TEST_QUEUE_CONFIG = dict(host='test_host', port='0', user='test_user', password='test_password')
 
-    @patch('nlp_celery_worker.celery_nlp_tasks.SentimentAnalyzer')
-    @patch('nlp_celery_worker.celery_nlp_tasks.ExchangePublisher')
     @patch.object(NlpServiceService, 'process_text')
     @patch('nlp_celery_worker.celery_nlp_tasks.CELERY_APP')
-    def test_initialize_worker(self, _, mocked_nlp_service, exchange_publisher_mock, __):
+    def test_initialize_worker(self, _, mocked_nlp_service):
         """
         Test initializing worker sets nlp service and queue_provider_config
         """
@@ -48,14 +47,12 @@ class TestCeleryTasks(TestCase):
         from nlp_celery_worker.celery_nlp_tasks import NLP_REMOTE_SERVICE
         self.assertIsNotNone(NLP_REMOTE_SERVICE)
 
-        from nlp_celery_worker.celery_nlp_tasks import EXCHANGE_PUBLISHER
-        self.assertEqual(EXCHANGE_PUBLISHER, exchange_publisher_mock())
+        from nlp_celery_worker.celery_nlp_tasks import QUEUE_PROVIDER_CONFIG
+        self.assertIsNotNone(QUEUE_PROVIDER_CONFIG)
 
-    @patch('nlp_celery_worker.celery_nlp_tasks.SentimentAnalyzer')
-    @patch('nlp_celery_worker.celery_nlp_tasks.ExchangePublisher')
     @patch.object(NlpServiceService, 'process_text')
     @patch('nlp_celery_worker.celery_nlp_tasks.CELERY_APP')
-    def test_process_text(self, _, mocked_nlp_service, __, ___):
+    def test_process_text(self, _, mocked_nlp_service):
         """
         Test process text outputs the input new and the processed text data
         """
@@ -64,14 +61,13 @@ class TestCeleryTasks(TestCase):
             return self.TEST_PROCESSED_TEXT
 
         mocked_nlp_service.return_value = process_response()
-        initialize_worker(self.TEST_NLP_SERVICE_CONFIG, self.TEST_QUEUE_CONFIG)
+        initialize_worker()
         new, nlp_doc = process_content(dict(self.TEST_NEW))
         self.assertEqual(new, dict(self.TEST_NEW))
         self.assertEqual(nlp_doc, dict(self.TEST_PROCESSED_TEXT))
 
-    @patch('nlp_celery_worker.celery_nlp_tasks.SentimentAnalyzer')
     @patch('nlp_celery_worker.celery_nlp_tasks.CELERY_APP')
-    def test_hydrate_new_entities(self, _, __):
+    def test_hydrate_new_entities(self, _):
         """
         Test hydrate with entities adds the named entities extracted removing duplicates and in lowercase
         """
@@ -79,10 +75,9 @@ class TestCeleryTasks(TestCase):
         self.assertEqual(nlp_doc, dict(self.TEST_PROCESSED_TEXT))
         self.assertListEqual(new['entities'], [dict(entity) for entity in self.TEST_ENTITIES])
 
-    @patch('nlp_celery_worker.celery_nlp_tasks.SentimentAnalyzer')
     @patch('nlp_celery_worker.celery_nlp_tasks.generate_summary_from_sentences')
     @patch('nlp_celery_worker.celery_nlp_tasks.CELERY_APP')
-    def test_hydrate_new_summary(self, _, mocked_generate_summary, __):
+    def test_hydrate_new_summary(self, _, mocked_generate_summary):
         """
         Test hydrate with summary adds the generated content summary to the new
         """
@@ -91,9 +86,8 @@ class TestCeleryTasks(TestCase):
         self.assertEqual(nlp_doc, dict(self.TEST_PROCESSED_TEXT))
         self.assertEqual(new['summary'], self.TEST_SUMMARY)
 
-    @patch('nlp_celery_worker.celery_nlp_tasks.SentimentAnalyzer')
     @patch('nlp_celery_worker.celery_nlp_tasks.CELERY_APP')
-    def test_hydrate_new_sentiment(self, _, __):
+    def test_hydrate_new_sentiment(self, _):
         """
         Test hydrate with sentiment adds the sentiment score of the content
         """
@@ -103,16 +97,26 @@ class TestCeleryTasks(TestCase):
         new = hydrate_new_sentiment((dict(self.TEST_NEW), dict(self.TEST_PROCESSED_TEXT)))
         self.assertEqual(new['sentiment'], self.TEST_SENTIMENT)
 
-    @patch('nlp_celery_worker.celery_nlp_tasks.SentimentAnalyzer')
-    @patch('nlp_celery_worker.celery_nlp_tasks.ExchangePublisher')
+    @patch('nlp_celery_worker.celery_nlp_tasks.PlainCredentials')
+    @patch('nlp_celery_worker.celery_nlp_tasks.ConnectionParameters')
+    @patch('nlp_celery_worker.celery_nlp_tasks.BlockingConnection')
+    @patch('nlp_celery_worker.celery_nlp_tasks.NlpServiceService')
     @patch('nlp_celery_worker.celery_nlp_tasks.CELERY_APP')
-    def test_publish_new(self, _, publisher_mock, __):
+    def test_publish_new(self, _, __, mocked_connection, ___, ____):
         """
         Test publishing new declares the exchange, publish the new, sets hydrated of new as true, closes the channel
         and closes the connection
         """
         initialize_worker()
+        channel_mock = MagicMock()
+        mocked_connection().channel.return_value = channel_mock
         publish_hydrated_new(dict(self.TEST_NEW))
 
+        channel_mock.exchange_declare.assert_called_with(exchange='news-internal-exchange', exchange_type='fanout',
+                                                         durable=True)
         self.TEST_NEW.hydrated = True
-        publisher_mock().assert_called_with(dict(self.TEST_NEW))
+        channel_mock.basic_publish.assert_called_with(exchange='news-internal-exchange', routing_key='',
+                                                      body=json.dumps(dict(self.TEST_NEW)))
+
+        channel_mock.close.assert_called_once()
+        mocked_connection().close.assert_called_once()

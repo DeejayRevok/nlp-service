@@ -2,13 +2,14 @@
 Celery tasks implementation module
 """
 import asyncio
+import json
 import os
 from typing import Tuple, Optional
 
 from celery.signals import worker_process_init
+from pika import BlockingConnection, ConnectionParameters, PlainCredentials
 
 from news_service_lib import NlpServiceService, ConfigProfile, Configuration
-from news_service_lib.messaging import ExchangePublisher
 from news_service_lib.models import New, NamedEntity
 
 from log_config import get_logger
@@ -19,7 +20,7 @@ from webapp.definitions import CONFIG_PATH
 
 LOGGER = get_logger()
 NLP_REMOTE_SERVICE: Optional[NlpServiceService] = None
-EXCHANGE_PUBLISHER: Optional[ExchangePublisher] = None
+QUEUE_PROVIDER_CONFIG: Optional[dict] = None
 SENTIMENT_ANALYZER: Optional[SentimentAnalyzer] = None
 
 
@@ -28,7 +29,7 @@ def initialize_worker(*_, **__):
     """
     Initialize the celery worker global variables
     """
-    global NLP_REMOTE_SERVICE, EXCHANGE_PUBLISHER, SENTIMENT_ANALYZER
+    global NLP_REMOTE_SERVICE, QUEUE_PROVIDER_CONFIG, SENTIMENT_ANALYZER
     LOGGER.info('Initializing worker')
 
     config_profile = ConfigProfile[os.environ.get('PROFILE')] if 'PROFILE' in os.environ else ConfigProfile.LOCAL
@@ -36,12 +37,7 @@ def initialize_worker(*_, **__):
 
     NLP_REMOTE_SERVICE = NlpServiceService(**configuration.get_section('SELF_REMOTE'))
 
-    exchange_publisher = ExchangePublisher(**configuration.get_section('RABBIT'),
-                                           exchange='news-internal-exchange',
-                                           logger=LOGGER)
-    exchange_publisher.connect()
-    exchange_publisher.initialize()
-    EXCHANGE_PUBLISHER = exchange_publisher
+    QUEUE_PROVIDER_CONFIG = configuration.get_section('RABBIT')
 
     SENTIMENT_ANALYZER = SentimentAnalyzer()
 
@@ -166,21 +162,28 @@ def hydrate_new_sentiment(new_nlp_doc: Tuple[dict, dict]):
 def publish_hydrated_new(new: dict):
     """
     Publish the the input new updated
-
     Args:
         new: new to publish
-
     """
-    global EXCHANGE_PUBLISHER
+    global QUEUE_PROVIDER_CONFIG
     if new is not None:
         LOGGER.info('Publishing hydrated new %s', new['title'])
-        if EXCHANGE_PUBLISHER is not None:
+        if QUEUE_PROVIDER_CONFIG is not None:
             LOGGER.info('Queue connection initialized, publishing...')
 
             new['hydrated'] = True
-            EXCHANGE_PUBLISHER(dict(new))
+            connection = BlockingConnection(
+                ConnectionParameters(host=QUEUE_PROVIDER_CONFIG['host'],
+                                     port=int(QUEUE_PROVIDER_CONFIG['port']),
+                                     credentials=PlainCredentials(QUEUE_PROVIDER_CONFIG['user'],
+                                                                  QUEUE_PROVIDER_CONFIG['password'])))
+            channel = connection.channel()
+            channel.exchange_declare(exchange='news-internal-exchange', exchange_type='fanout', durable=True)
+            channel.basic_publish(exchange='news-internal-exchange', routing_key='', body=json.dumps(dict(new)))
 
             LOGGER.info('New published')
+            channel.close()
+            connection.close()
         else:
             LOGGER.warning('Queue connection configuration not initialized, skipping publish...')
     else:
