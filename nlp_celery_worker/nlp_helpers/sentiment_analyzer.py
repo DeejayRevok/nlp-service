@@ -111,4 +111,4 @@ def initialize_sentiment_analyzer():
     Initialize the sentiment analyzer downloading the required resources (Spacy spanish model)
     """
     LOGGER.info('Downloading spacy spanish model')
-    download('es_core_news_sm')
+    download('es_core_news_md')

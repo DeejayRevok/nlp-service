@@ -207,6 +207,7 @@ brillantez
 brillar
 brisa
 bueno
+buen
 caballeresco
 caballerosidad
 caballería
