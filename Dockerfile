@@ -11,7 +11,7 @@ RUN apt-get update && apt-get install metricbeat
 RUN pip install --upgrade pip
 RUN pip install -r ./nlp_service/requirements.txt
 
-RUN python -m spacy download 'es_core_news_sm'
+RUN python -m spacy download 'es_core_news_md'
 
 COPY ./tools_config/metricbeat.yml /etc/metricbeat/metricbeat.yml
 

@@ -21,7 +21,7 @@ class TestSentimentAnalyzer(TestCase):
         Test initialize sentiment analyzer downloads the required resources
         """
         initialize_sentiment_analyzer()
-        download_mock.assert_called_with('es_core_news_sm')
+        download_mock.assert_called_with('es_core_news_md')
 
     def test_negative_sentiment(self):
         """
