@@ -22,7 +22,7 @@ class SentimentAnalyzer:
         """
         Initialize the sentiment analyzer loading the required lexicons and loading the required nlp components
         """
-        self._nlp_pipeline = spacy.load('es_core_news_sm')
+        self._nlp_pipeline = spacy.load('es_core_news_md')
         with open(join(dirname(__file__), 'resources/sentiment_lexicon/booster_increase.txt'), 'r') as file:
             self._boosters_increase = list(map(lambda word: word.strip(), file.readlines()))
 
