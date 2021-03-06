@@ -21,7 +21,7 @@ class NlpService:
         """
         Initialize the NLP service loading the language model
         """
-        self._spanish_language = spacy.load('es_core_news_sm')
+        self._spanish_language = spacy.load('es_core_news_md')
 
     async def _process_text(self, text: str) -> Doc:
         """
