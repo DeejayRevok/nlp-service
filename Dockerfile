@@ -9,11 +9,10 @@ RUN echo "deb https://artifacts.elastic.co/packages/7.x/apt stable main" | tee -
 RUN apt-get update && apt-get install metricbeat
 
 RUN pip install --upgrade pip
-RUN pip install -r ./nlp_service/requirements.txt
-
-RUN python -m spacy download 'es_core_news_md'
+RUN pip install -r nlp_service/requirements.txt
 
 COPY ./tools_config/metricbeat.yml /etc/metricbeat/metricbeat.yml
 
-EXPOSE 8082
-CMD service metricbeat start && export PYTHONPATH=${PYTHONPATH}:/app/nlp_service && python ./nlp_service/webapp/main.py -p DOCKER
+RUN python -m spacy download 'es_core_news_md'
+
+CMD service metricbeat start && export PYTHONPATH=${PYTHONPATH}:/app/nlp_service && python ./nlp_service/worker/celery_app.py -p DOCKER

@@ -1,21 +1,18 @@
 """
 NLP functions module
 """
+import base64
+import numpy as np
+
 import spacy
+from spacy.vocab import Vocab
 from spacy.tokens import Doc
-
-from news_service_lib.models import NLPDoc
-
-from nlp_celery_worker.celery_nlp_tasks import hydrate_new_with_entities, publish_hydrated_new, \
-    process_content, hydrate_new_summary, hydrate_new_sentiment, hydrate_new_with_noun_chunks
 
 
 class NlpService:
     """
     NLP service implementation
     """
-    CELERY_NLP_PIPELINE = [process_content, hydrate_new_with_entities, hydrate_new_with_noun_chunks,
-                           hydrate_new_summary, hydrate_new_sentiment]
 
     def __init__(self):
         """
@@ -23,9 +20,9 @@ class NlpService:
         """
         self._spanish_language = spacy.load('es_core_news_md')
 
-    async def _process_text(self, text: str) -> Doc:
+    def process_text(self, text: str) -> Doc:
         """
-        Process a text with the language model
+        Process a text with the NLP language model
 
         Args:
             text: text to process
@@ -35,34 +32,44 @@ class NlpService:
         """
         return self._spanish_language(text)
 
-    async def get_processed_text(self, text: str) -> NLPDoc:
+    def nlp_vocab(self) -> Vocab:
         """
-        Get NLP data about the input text
+        Get the NLP model vocabulary
+
+        Returns: NLP model vocabulary
+
+        """
+        return self._spanish_language.vocab
+
+    def doc_from_json_dict(self, doc_dict: dict) -> Doc:
+        """
+        Transform a jsonable dictionary into a NLP document
 
         Args:
-            text: text to extract NLP data
+            doc_dict: dictionary representation of a NLP document
 
-        Returns: NLP data extracted
+        Returns: NLP document with the dictionary representation
 
         """
-        doc = await self._process_text(text)
-        return NLPDoc(sentences=[str(sentence) for sentence in doc.sents],
-                      named_entities=[(str(entity), entity.label_) for entity in doc.ents],
-                      noun_chunks=[str(noun_chunk) for noun_chunk in doc.noun_chunks if len(noun_chunk.ents) == 0])
+        new_doc_dict = doc_dict.copy()
+        new_doc_dict['array_body'] = np.array(new_doc_dict['array_body'], dtype=np.uint64)
+        new_doc_dict['tensor'] = np.array(new_doc_dict['tensor'])
+        new_doc_dict['spans'] = base64.b64decode(new_doc_dict['spans'].encode('UTF-8'))
+        return Doc(self.nlp_vocab()).from_dict(new_doc_dict)
 
-    async def hydrate_new(self, new: dict):
+    @staticmethod
+    def doc_to_json_dict(doc: Doc) -> dict:
         """
-        Hydrate the given new with NLP information
+        Transform a NLP document to a jsonable dictionary
 
         Args:
-            new: new to hydrate
+            doc: NLP document
+
+        Returns: jsonable dictionary representation of the input doc
 
         """
-        hydrate_chain_start = self.CELERY_NLP_PIPELINE[0].s(new)
-        previous_task = hydrate_chain_start
-        for task in self.CELERY_NLP_PIPELINE[1:]:
-            task_signature = task.s()
-            previous_task.link(task_signature)
-            previous_task = task_signature
-        previous_task.link(publish_hydrated_new.s())
-        hydrate_chain_start.delay()
+        doc_dict = doc.to_dict()
+        doc_dict['array_body'] = doc_dict['array_body'].tolist()
+        doc_dict['tensor'] = doc_dict['tensor'].tolist()
+        doc_dict['spans'] = base64.b64encode(doc_dict['spans']).decode('UTF-8')
+        return doc_dict

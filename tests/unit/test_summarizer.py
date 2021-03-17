@@ -4,7 +4,7 @@ Summarizer tests module
 from unittest import TestCase
 from unittest.mock import patch
 
-from nlp_celery_worker.nlp_helpers.summarizer import initialize_summarizer, generate_summary_from_sentences
+from services.summary_service import initialize_summary_service, SummaryService
 
 
 class TestSummarizer(TestCase):
@@ -23,20 +23,21 @@ class TestSummarizer(TestCase):
                                          'De eso y esto y lo otro pero nada.',
                                          'De eso y esto y la otra frase pero nada.']
 
-    @patch('nlp_celery_worker.nlp_helpers.summarizer.download')
+    @patch('services.summary_service.download')
     def test_initialize_summarizer(self, download_mock):
         """
         Test the initialize summarizer downloads the required resources
         """
-        initialize_summarizer()
+        initialize_summary_service()
         download_mock.assert_called_with('stopwords')
 
     def test_generate_summary_from_sentences(self):
         """
-        Test the generate summary returns the correct summary
+        Test the summary generation returns the correct summary
         """
-        initialize_summarizer()
-        summary = generate_summary_from_sentences(self.TEST_INPUT_SENTENCES)
+        initialize_summary_service()
+        summary_service = SummaryService()
+        summary = summary_service(self.TEST_INPUT_SENTENCES)
         for sentence in self.OUTPUT_SUMMARY_SENTENCES:
             self.assertIn(sentence, summary)
         for sentence in self.OUTPUT_SUMMARY_EXCLUDED_SENTENCES:

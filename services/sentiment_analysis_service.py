@@ -2,56 +2,57 @@
 Sentiment analysis module
 """
 from math import sqrt
-from os.path import join, dirname
-from typing import List, Iterator
+from os.path import join
+from typing import List, Iterator, Union
 
-import spacy
 from spacy.cli import download
-from spacy.tokens import Token
+from spacy.tokens import Token, Span
 
+from config import RESOURCES_PATH
 from log_config import get_logger
+from services.nlp_service import NlpService
 
 LOGGER = get_logger()
 
 
-class SentimentAnalyzer:
+class SentimentAnalysisService:
     """
     Sentiment analyzer implementation
     """
-    def __init__(self):
+    def __init__(self, nlp_service: NlpService):
         """
         Initialize the sentiment analyzer loading the required lexicons and loading the required nlp components
         """
-        self._nlp_pipeline = spacy.load('es_core_news_md')
-        with open(join(dirname(__file__), 'resources/sentiment_lexicon/booster_increase.txt'), 'r') as file:
+        self._nlp_service = nlp_service
+        with open(join(RESOURCES_PATH, 'sentiment_lexicon/booster_increase.txt'), 'r') as file:
             self._boosters_increase = list(map(lambda word: word.strip(), file.readlines()))
 
-        with open(join(dirname(__file__), 'resources/sentiment_lexicon/booster_decrease.txt'), 'r') as file:
+        with open(join(RESOURCES_PATH, 'sentiment_lexicon/booster_decrease.txt'), 'r') as file:
             self._boosters_decrease = list(map(lambda word: word.strip(), file.readlines()))
 
-        with open(join(dirname(__file__), 'resources/sentiment_lexicon/negative_lexicon.txt'), 'r') as file:
+        with open(join(RESOURCES_PATH, 'sentiment_lexicon/negative_lexicon.txt'), 'r') as file:
             self._negatives = list(map(lambda word: word.strip(), file.readlines()))
 
-        with open(join(dirname(__file__), 'resources/sentiment_lexicon/positive_lexicon.txt'), 'r') as file:
+        with open(join(RESOURCES_PATH, 'sentiment_lexicon/positive_lexicon.txt'), 'r') as file:
             self._positives = list(map(lambda word: word.strip(), file.readlines()))
 
-    def __call__(self, sentences_list: List[str]) -> float:
+    def __call__(self, sentences: Union[List[str], List[Span]]) -> float:
         """
         Analyze the sentiment of the given sentences list
 
         Args:
-            sentences_list: list of sentences to analyze sentiment
+            sentences: list of sentences to analyze sentiment
 
         Returns: overall sentiment of the input sentences
 
         """
-        LOGGER.info('Starting sentiment analysis for %d sentences', len(sentences_list))
+        LOGGER.info('Starting sentiment analysis for %d sentences', len(sentences))
         sentiment = 0
-        for sentence in sentences_list:
+        for sentence in sentences:
             sentiment += self._get_sentence_sentiment(sentence)
         return sentiment
 
-    def _get_sentence_sentiment(self, sentence: str) -> float:
+    def _get_sentence_sentiment(self, sentence: Union[str, Span]) -> float:
         """
         Get the sentiment score for the input sentence
 
@@ -62,7 +63,8 @@ class SentimentAnalyzer:
 
         """
         sentence_sentiment = 0
-        for token in self._nlp_pipeline(sentence):
+        sentence = sentence if not isinstance(sentence, str) else self._nlp_service.process_text(sentence)
+        for token in sentence:
             sentence_sentiment += self._get_token_sentiment(token)
 
         return sentence_sentiment/sqrt(sentence_sentiment*sentence_sentiment + 15)
@@ -104,11 +106,3 @@ class SentimentAnalyzer:
                 elif children.lower_ == 'no':
                     sentiment = -sentiment
         return sentiment
-
-
-def initialize_sentiment_analyzer():
-    """
-    Initialize the sentiment analyzer downloading the required resources (Spacy spanish model)
-    """
-    LOGGER.info('Downloading spacy spanish model')
-    download('es_core_news_md')

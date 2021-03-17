@@ -2,10 +2,11 @@
 Sentiment analyzer tests module
 """
 from unittest import TestCase
-from unittest.mock import patch
 
-from nlp_celery_worker.nlp_helpers.sentiment_analyzer import initialize_sentiment_analyzer, \
-    SentimentAnalyzer
+from spacy.cli import download
+
+from services.nlp_service import NlpService
+from services.sentiment_analysis_service import SentimentAnalysisService
 
 
 class TestSentimentAnalyzer(TestCase):
@@ -15,20 +16,19 @@ class TestSentimentAnalyzer(TestCase):
     TEST_POSITIVE_NEGATED_SENTENCE = ['Esta frase no es buena']
     TEST_NEGATIVE_NEGATED_SENTENCE = ['Esta frase no es mala']
 
-    @patch('nlp_celery_worker.nlp_helpers.sentiment_analyzer.download')
-    def test_initialize_sentiment_analyzer(self, download_mock):
+    @classmethod
+    def setUpClass(cls) -> None:
         """
-        Test initialize sentiment analyzer downloads the required resources
+        Set up the tests environment
         """
-        initialize_sentiment_analyzer()
-        download_mock.assert_called_with('es_core_news_md')
+        download('es_core_news_md')
 
     def test_negative_sentiment(self):
         """
         Test the sentiment analyzer with overall negative sentences returns negative score
         """
-        initialize_sentiment_analyzer()
-        sentiment_analyzer = SentimentAnalyzer()
+        nlp_service = NlpService()
+        sentiment_analyzer = SentimentAnalysisService(nlp_service)
         sentiment_score = sentiment_analyzer(self.TEST_NEGATIVE_SENTENCES)
         self.assertLess(sentiment_score, 0)
 
@@ -36,8 +36,8 @@ class TestSentimentAnalyzer(TestCase):
         """
         Test the sentiment analyzer with overall positive sentences returns positive score
         """
-        initialize_sentiment_analyzer()
-        sentiment_analyzer = SentimentAnalyzer()
+        nlp_service = NlpService()
+        sentiment_analyzer = SentimentAnalysisService(nlp_service)
         sentiment_score = sentiment_analyzer(self.TEST_POSITIVE_SENTENCES)
         self.assertGreater(sentiment_score, 0)
 
@@ -45,8 +45,8 @@ class TestSentimentAnalyzer(TestCase):
         """
         Test the sentiment analyzer with positive negated sentence returns negative score
         """
-        initialize_sentiment_analyzer()
-        sentiment_analyzer = SentimentAnalyzer()
+        nlp_service = NlpService()
+        sentiment_analyzer = SentimentAnalysisService(nlp_service)
         sentiment_score = sentiment_analyzer(self.TEST_POSITIVE_NEGATED_SENTENCE)
         self.assertLess(sentiment_score, 0)
 
@@ -54,8 +54,8 @@ class TestSentimentAnalyzer(TestCase):
         """
         Test the sentiment analyzer with negative negated sentence returns positive score
         """
-        initialize_sentiment_analyzer()
-        sentiment_analyzer = SentimentAnalyzer()
+        nlp_service = NlpService()
+        sentiment_analyzer = SentimentAnalysisService(nlp_service)
         sentiment_score = sentiment_analyzer(self.TEST_NEGATIVE_NEGATED_SENTENCE)
         self.assertGreater(sentiment_score, 0)
 
