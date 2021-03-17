@@ -6,6 +6,7 @@ from unittest import TestCase
 from unittest.mock import patch, MagicMock
 
 from dynaconf.loaders import settings_loader
+from spacy.cli import download
 
 from config import config
 from news_service_lib.models import New, NamedEntity, NLPDoc
@@ -46,6 +47,13 @@ class TestCeleryTasks(TestCase):
 
     TEST_NLP_SERVICE_CONFIG = dict(protocol='test_protocol', host='test_host', port='0')
     TEST_QUEUE_CONFIG = dict(host='test_host', port='0', user='test_user', password='test_password')
+
+    @classmethod
+    def setUpClass(cls) -> None:
+        """
+        Set up the tests environment
+        """
+        download('es_core_news_md')
 
     @patch('worker.celery_tasks.SummaryService')
     @patch('worker.celery_tasks.SentimentAnalysisService')
