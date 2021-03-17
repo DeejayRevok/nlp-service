@@ -13,4 +13,6 @@ RUN pip install -r nlp_service/requirements.txt
 
 COPY ./tools_config/metricbeat.yml /etc/metricbeat/metricbeat.yml
 
+RUN python -m spacy download 'es_core_news_md'
+
 CMD service metricbeat start && export PYTHONPATH=${PYTHONPATH}:/app/nlp_service && python ./nlp_service/worker/celery_app.py -p DOCKER

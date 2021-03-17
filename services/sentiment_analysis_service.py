@@ -15,14 +15,6 @@ from services.nlp_service import NlpService
 LOGGER = get_logger()
 
 
-def initialize_sentiment_analysis():
-    """
-    Initialize the sentiment analyzer downloading the required resources (Spacy spanish model)
-    """
-    LOGGER.info('Downloading spacy spanish model')
-    download('es_core_news_md')
-
-
 class SentimentAnalysisService:
     """
     Sentiment analyzer implementation

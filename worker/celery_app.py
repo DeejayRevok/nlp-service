@@ -9,7 +9,6 @@ from news_service_lib.redis_utils import build_redis_url
 
 from config import load_config, config
 from log_config import LOG_CONFIG
-from services.sentiment_analysis_service import initialize_sentiment_analysis
 from services.summary_service import initialize_summary_service
 
 asynpool.PROC_ALIVE_TIMEOUT = 60.0
@@ -22,7 +21,6 @@ if __name__ == '__main__':
     load_config(ARGS['profile'])
 
     initialize_summary_service()
-    initialize_sentiment_analysis()
 
     add_logstash_handler(LOG_CONFIG, config.logstash.host, config.logstash.port)
     CELERY_APP.configure(task_queue_name='nlp-worker',
