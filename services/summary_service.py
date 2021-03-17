@@ -148,7 +148,6 @@ class SummaryService:
         Returns: sentence similarity
 
         """
-
         all_words = list(set(sent1 + sent2))
 
         vector1 = [0] * len(all_words)

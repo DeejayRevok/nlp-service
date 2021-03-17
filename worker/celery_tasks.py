@@ -6,7 +6,6 @@ from typing import Optional
 
 from celery.signals import worker_process_init
 from pika import BlockingConnection, ConnectionParameters, PlainCredentials
-from spacy.tokens import Doc
 from news_service_lib.models import New, NamedEntity
 
 from config import config
@@ -37,7 +36,7 @@ def initialize_worker(*_, **__):
 
 
 @CELERY_APP.app.task(name='process_new_content', base=ChainedTask)
-def process_new_content(new: dict):
+def process_new_content(new: dict = None, **_):
     """
     Apply NLP processing to the input new content
 
@@ -51,14 +50,14 @@ def process_new_content(new: dict):
     LOGGER.info('NLP Processing new %s', new['title'])
     if NLP_SERVICE is not None:
         processed_content = NLP_SERVICE.process_text(new['content'])
-        return processed_content.to_dict()
+        return NLP_SERVICE.doc_to_json_dict(processed_content)
     else:
         LOGGER.warning('NLP service not initialized, skipping NLP processing')
         return None
 
 
 @CELERY_APP.app.task(name='summarize', base=ChainedTask)
-def summarize(nlp_doc: dict):
+def summarize(nlp_doc: dict = None, **_):
     """
     Generate the summary for the input NLP doc
 
@@ -72,8 +71,8 @@ def summarize(nlp_doc: dict):
     LOGGER.info('Generating summary')
     if SUMMARIZER is not None:
         if nlp_doc is not None:
-            doc = Doc(NLP_SERVICE.nlp_vocab()).from_dict(nlp_doc)
-            return SUMMARIZER(doc.sents)
+            doc = NLP_SERVICE.doc_from_json_dict(nlp_doc)
+            return SUMMARIZER(list(doc.sents))
         else:
             LOGGER.warning('NLP document is missing. Skipping summary generation...')
             return None
@@ -83,7 +82,7 @@ def summarize(nlp_doc: dict):
 
 
 @CELERY_APP.app.task(name='sentiment_analysis', base=ChainedTask)
-def sentiment_analysis(nlp_doc: dict):
+def sentiment_analysis(nlp_doc: dict = None, **_):
     """
     Get the sentiment score of the input doc sentences
 
@@ -97,8 +96,8 @@ def sentiment_analysis(nlp_doc: dict):
     LOGGER.info('Generating sentiment score')
     if SENTIMENT_ANALYZER is not None:
         if nlp_doc is not None:
-            doc = Doc(NLP_SERVICE.nlp_vocab()).from_dict(nlp_doc)
-            return SENTIMENT_ANALYZER(doc.sents)
+            doc = NLP_SERVICE.doc_from_json_dict(nlp_doc)
+            return SENTIMENT_ANALYZER(list(doc.sents))
         else:
             LOGGER.warning('NLP document is missing. Skipping sentiment calculation...')
             return None
@@ -108,7 +107,7 @@ def sentiment_analysis(nlp_doc: dict):
 
 
 @CELERY_APP.app.task(name='hydrate_new', base=ChainedTask)
-def hydrate_new(new: dict, nlp_doc: dict, summary: str, sentiment: float):
+def hydrate_new(new: dict = None, nlp_doc: dict = None, summary: str = None, sentiment: float = None, **_):
     """
     Hydrate the input new with the named entities and noun chunks from the input NLP document and with the input
     summary and sentiment
@@ -133,7 +132,7 @@ def hydrate_new(new: dict, nlp_doc: dict, summary: str, sentiment: float):
         new.sentiment = sentiment
 
     if nlp_doc is not None:
-        doc = Doc(NLP_SERVICE.nlp_vocab()).from_dict(nlp_doc)
+        doc = NLP_SERVICE.doc_from_json_dict(nlp_doc)
         new.entities = list(
             set(map(lambda entity: NamedEntity(text=str(entity), type=entity.label_), doc.ents)))
         new.noun_chunks = list(map(lambda chunk: str(chunk), doc.noun_chunks))
@@ -142,7 +141,7 @@ def hydrate_new(new: dict, nlp_doc: dict, summary: str, sentiment: float):
 
 
 @CELERY_APP.app.task(name='publish_hydrated_new', base=ChainedTask)
-def publish_hydrated_new(new: dict):
+def publish_hydrated_new(new: dict = None, **_):
     """
     Publish the the input new updated
     Args:

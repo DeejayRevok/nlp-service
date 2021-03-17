@@ -66,78 +66,73 @@ class TestCeleryTasks(TestCase):
         from worker.celery_tasks import SUMMARIZER
         self.assertIsNotNone(SUMMARIZER)
 
+    @patch.object(NlpService, 'doc_to_json_dict', return_value=dict(TEST_PROCESSED_TEXT))
     @patch.object(NlpService, 'process_text')
     @patch('worker.celery_tasks.CELERY_APP')
-    def test_process_text(self, _, mocked_nlp_service):
+    def test_process_text(self, _, __, ___):
         """
         Test processing the text returns the dictionary representation of the doc object
         """
-        mock_doc = MagicMock()
-        mock_doc.to_dict.return_value = dict(self.TEST_PROCESSED_TEXT)
-        mocked_nlp_service.return_value = mock_doc
         initialize_worker()
         nlp_doc = process_new_content(dict(self.TEST_NEW))
         self.assertEqual(nlp_doc, dict(self.TEST_PROCESSED_TEXT))
 
-    @patch('worker.celery_tasks.Doc')
     @patch('worker.celery_tasks.CELERY_APP')
-    def test_hydrate_new(self, _, doc_mock):
+    def test_hydrate_new(self, _):
         """
         Test hydrating the new hydrates all provided parameters
         """
         spacy_doc_mock = MagicMock()
         spacy_doc_mock.ents = [TestNamedEntity('Test_ENTITY_text', 'test_entity_type')]
         spacy_doc_mock.noun_chunks = self.TEST_NOUN_CHUNKS
-        mocked_doc = MagicMock()
-        mocked_doc.from_dict.return_value = spacy_doc_mock
 
-        celery_tasks.NLP_SERVICE = MagicMock()
-        doc_mock.return_value = mocked_doc
+        nlp_service_mock = MagicMock()
+        nlp_service_mock.doc_from_json_dict.return_value = spacy_doc_mock
+        celery_tasks.NLP_SERVICE = nlp_service_mock
+
         new = hydrate_new(dict(self.TEST_NEW), dict(self.TEST_PROCESSED_TEXT), self.TEST_SUMMARY, self.TEST_SENTIMENT)
         self.assertListEqual(new['entities'], [dict(entity) for entity in self.TEST_ENTITIES])
         self.assertListEqual(new['noun_chunks'], self.TEST_NOUN_CHUNKS)
         self.assertEqual(new['summary'], self.TEST_SUMMARY)
         self.assertEqual(new['sentiment'], self.TEST_SENTIMENT)
 
-    @patch('worker.celery_tasks.Doc')
     @patch('worker.celery_tasks.CELERY_APP')
-    def test_summarize(self, _, doc_mock):
+    def test_summarize(self, _):
         """
         Test the summarize task calls the summarizer service with the doc sentences and returns the summary
         """
-        test_sentences = ['Sentence number one', 'Sentence number two']
-        spacy_doc_mock = MagicMock()
-        spacy_doc_mock.sents = test_sentences
-        mocked_doc = MagicMock()
-        mocked_doc.from_dict.return_value = spacy_doc_mock
-        doc_mock.return_value = mocked_doc
-
         summarizer_mock = MagicMock()
         summarizer_mock.return_value = self.TEST_SUMMARY
 
-        celery_tasks.NLP_SERVICE = MagicMock()
+        test_sentences = ['Sentence number one', 'Sentence number two']
+        spacy_doc_mock = MagicMock()
+        spacy_doc_mock.sents = test_sentences
+        spacy_doc_mock.noun_chunks = self.TEST_NOUN_CHUNKS
+
+        nlp_service_mock = MagicMock()
+        nlp_service_mock.doc_from_json_dict.return_value = spacy_doc_mock
+        celery_tasks.NLP_SERVICE = nlp_service_mock
         celery_tasks.SUMMARIZER = summarizer_mock
         summary = summarize(dict(self.TEST_PROCESSED_TEXT))
         self.assertEqual(summary, self.TEST_SUMMARY)
         summarizer_mock.assert_called_with(test_sentences)
 
-    @patch('worker.celery_tasks.Doc')
     @patch('worker.celery_tasks.CELERY_APP')
-    def test_sentiment_analysis(self, _, doc_mock):
+    def test_sentiment_analysis(self, _):
         """
         Test the sentiment analysis task calls the sentiment analyzer with the doc sentences and returns the sentiment
         """
-        test_sentences = ['Sentence number one', 'Sentence number two']
-        spacy_doc_mock = MagicMock()
-        spacy_doc_mock.sents = test_sentences
-        mocked_doc = MagicMock()
-        mocked_doc.from_dict.return_value = spacy_doc_mock
-        doc_mock.return_value = mocked_doc
-
         sentiment_analyzer_mock = MagicMock()
         sentiment_analyzer_mock.return_value = self.TEST_SENTIMENT
 
-        celery_tasks.NLP_SERVICE = MagicMock()
+        test_sentences = ['Sentence number one', 'Sentence number two']
+        spacy_doc_mock = MagicMock()
+        spacy_doc_mock.sents = test_sentences
+        spacy_doc_mock.noun_chunks = self.TEST_NOUN_CHUNKS
+
+        nlp_service_mock = MagicMock()
+        nlp_service_mock.doc_from_json_dict.return_value = spacy_doc_mock
+        celery_tasks.NLP_SERVICE = nlp_service_mock
         celery_tasks.SENTIMENT_ANALYZER = sentiment_analyzer_mock
         sentiment = sentiment_analysis(dict(self.TEST_PROCESSED_TEXT))
         self.assertEqual(sentiment, self.TEST_SENTIMENT)
