@@ -2,6 +2,8 @@
 Main nlp celery worker module
 """
 from celery.concurrency import asynpool
+from elasticapm import Client
+from elasticapm.contrib.celery import register_instrumentation, register_exception_tracking
 
 from news_service_lib import profile_args_parser, add_logstash_handler
 from news_service_lib.base_celery_app import BaseCeleryApp
@@ -27,4 +29,13 @@ if __name__ == '__main__':
                          broker_config=config.rabbit,
                          worker_concurrency=config.celery.concurrency,
                          result_backend_url=build_redis_url(**config.redis))
+
+    apm_client = Client(config={
+        'SERVICE_NAME': config.elastic_apm.service_name,
+        'SECRET_TOKEN': config.elastic_apm.secret_token,
+        'SERVER_URL': f'http://{config.elastic_apm.host}:{config.elastic_apm.port}'
+    })
+    register_instrumentation(apm_client)
+    register_exception_tracking(apm_client)
+
     CELERY_APP.run()

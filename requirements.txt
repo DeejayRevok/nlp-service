@@ -12,3 +12,4 @@ nltk==3.5
 networkx==2.4
 spacy==3.0.3
 dynaconf==3.1.4
+elastic-apm

@@ -1,6 +1,6 @@
 elastic_apm:
-  service-name: nlp-service
-  secret-token: xxVpmQB2HMzCL9PgBHVrnxjNXXw5J7bd79DFm6sjBJR5HPXDhcF8MSb3vv4bpg44
+  service_name: nlp-service
+  secret_token: xxVpmQB2HMzCL9PgBHVrnxjNXXw5J7bd79DFm6sjBJR5HPXDhcF8MSb3vv4bpg44
   host: apm-server
   port: 8200
 
