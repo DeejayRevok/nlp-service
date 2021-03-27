@@ -9,7 +9,7 @@ from news_service_lib.models import New, NamedEntity
 
 from config import config
 from log_config import get_logger
-from worker.celery_app import CELERY_APP
+from worker.main import CELERY_APP
 from worker.utils.chained_task import ChainedTask
 
 LOGGER = get_logger()
