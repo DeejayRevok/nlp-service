@@ -14,6 +14,6 @@ Inside the application folder run:
 ```
 export PYTHONPATH={FULL_PATH_TO_APPLICATION_FOLDER}
 pip install -r requirements.txt
-python worker/celery_app.py -p LOCAL
+python worker/main.py -p LOCAL
 ```
 

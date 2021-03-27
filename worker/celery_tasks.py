@@ -1,25 +1,18 @@
 """
 Celery tasks implementation module
 """
-import json
-from typing import Optional
+from celery.signals import worker_process_init, worker_process_shutdown
+from pypendency.builder import container_builder
 
-from celery.signals import worker_process_init
-from pika import BlockingConnection, ConnectionParameters, PlainCredentials
+from news_service_lib.messaging import ExchangePublisher
 from news_service_lib.models import New, NamedEntity
 
 from config import config
 from log_config import get_logger
-from services.nlp_service import NlpService
-from services.sentiment_analysis_service import SentimentAnalysisService
-from services.summary_service import SummaryService
-from worker.celery_app import CELERY_APP
+from worker.main import CELERY_APP
 from worker.utils.chained_task import ChainedTask
 
 LOGGER = get_logger()
-NLP_SERVICE: Optional[NlpService] = None
-SENTIMENT_ANALYZER: Optional[SentimentAnalysisService] = None
-SUMMARIZER: Optional[SummaryService] = None
 
 
 @worker_process_init.connect()
@@ -27,12 +20,10 @@ def initialize_worker(*_, **__):
     """
     Initialize the celery worker global variables
     """
-    global NLP_SERVICE, SENTIMENT_ANALYZER, SUMMARIZER
     LOGGER.info('Initializing worker')
-
-    NLP_SERVICE = NlpService()
-    SENTIMENT_ANALYZER = SentimentAnalysisService(NLP_SERVICE)
-    SUMMARIZER = SummaryService()
+    exchange_publisher: ExchangePublisher = container_builder.get('exchange_publisher')
+    exchange_publisher.connect()
+    exchange_publisher.initialize()
 
 
 @CELERY_APP.app.task(name='process_new_content', base=ChainedTask)
@@ -46,11 +37,12 @@ def process_new_content(new: dict = None, **_):
     Returns: new to hydrate in next tasks, processed new content
 
     """
-    global NLP_SERVICE
     LOGGER.info('NLP Processing new %s', new['title'])
-    if NLP_SERVICE is not None:
-        processed_content = NLP_SERVICE.process_text(new['content'])
-        return NLP_SERVICE.doc_to_json_dict(processed_content)
+
+    nlp_service = container_builder.get('services.nlp_service.NlpService')
+    if nlp_service is not None:
+        processed_content = nlp_service.process_text(new['content'])
+        return nlp_service.doc_to_json_dict(processed_content)
     else:
         LOGGER.warning('NLP service not initialized, skipping NLP processing')
         return None
@@ -67,12 +59,14 @@ def summarize(nlp_doc: dict = None, **_):
     Returns: summary of the doc sentences
 
     """
-    global NLP_SERVICE, SUMMARIZER
     LOGGER.info('Generating summary')
-    if SUMMARIZER is not None:
+
+    nlp_service = container_builder.get('services.nlp_service.NlpService')
+    summarizer = container_builder.get('services.summary_service.SummaryService')
+    if summarizer is not None:
         if nlp_doc is not None:
-            doc = NLP_SERVICE.doc_from_json_dict(nlp_doc)
-            return SUMMARIZER(list(doc.sents))
+            doc = nlp_service.doc_from_json_dict(nlp_doc)
+            return summarizer(list(doc.sents))
         else:
             LOGGER.warning('NLP document is missing. Skipping summary generation...')
             return None
@@ -92,12 +86,14 @@ def sentiment_analysis(nlp_doc: dict = None, **_):
     Returns: input doc sentences sentiment score
 
     """
-    global SENTIMENT_ANALYZER, NLP_SERVICE
     LOGGER.info('Generating sentiment score')
-    if SENTIMENT_ANALYZER is not None:
+
+    nlp_service = container_builder.get('services.nlp_service.NlpService')
+    sentiment_analyzer = container_builder.get('services.sentiment_analysis_service.SentimentAnalysisService')
+    if sentiment_analyzer is not None:
         if nlp_doc is not None:
-            doc = NLP_SERVICE.doc_from_json_dict(nlp_doc)
-            return SENTIMENT_ANALYZER(list(doc.sents))
+            doc = nlp_service.doc_from_json_dict(nlp_doc)
+            return sentiment_analyzer(list(doc.sents))
         else:
             LOGGER.warning('NLP document is missing. Skipping sentiment calculation...')
             return None
@@ -121,7 +117,6 @@ def hydrate_new(new: dict = None, nlp_doc: dict = None, summary: str = None, sen
     Returns: hydrated new
 
     """
-    global NLP_SERVICE
     LOGGER.info('Hydrating new %s', new['title'])
     new = New(**new)
 
@@ -131,8 +126,9 @@ def hydrate_new(new: dict = None, nlp_doc: dict = None, summary: str = None, sen
     if sentiment is not None:
         new.sentiment = sentiment
 
+    nlp_service = container_builder.get('services.nlp_service.NlpService')
     if nlp_doc is not None:
-        doc = NLP_SERVICE.doc_from_json_dict(nlp_doc)
+        doc = nlp_service.doc_from_json_dict(nlp_doc)
         new.entities = list(
             set(map(lambda entity: NamedEntity(text=str(entity), type=entity.label_), doc.ents)))
         new.noun_chunks = list(map(lambda chunk: str(chunk), doc.noun_chunks))
@@ -153,19 +149,21 @@ def publish_hydrated_new(new: dict = None, **_):
             LOGGER.info('Queue connection initialized, publishing...')
 
             new['hydrated'] = True
-            connection = BlockingConnection(
-                ConnectionParameters(host=config.rabbit.host,
-                                     port=config.rabbit.port,
-                                     credentials=PlainCredentials(config.rabbit.user,
-                                                                  config.rabbit.password)))
-            channel = connection.channel()
-            channel.exchange_declare(exchange='news-internal-exchange', exchange_type='fanout', durable=True)
-            channel.basic_publish(exchange='news-internal-exchange', routing_key='', body=json.dumps(dict(new)))
+            exchange_publisher: ExchangePublisher = container_builder.get('exchange_publisher')
 
+            exchange_publisher(new)
             LOGGER.info('New published')
-            channel.close()
-            connection.close()
         else:
             LOGGER.warning('Queue connection configuration not initialized, skipping publish...')
     else:
         LOGGER.warning('Tasks chain services not initialized, skipping publish...')
+
+
+@worker_process_shutdown.connect()
+def shutdown_worker(*_, **__):
+    """
+    Shutdown the celery worker shutting down the exchange publisher
+    """
+    LOGGER.info('Shutting down worker')
+    exchange_publisher: ExchangePublisher = container_builder.get('exchange_publisher')
+    exchange_publisher.shutdown()
