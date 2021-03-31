@@ -5,7 +5,6 @@ from math import sqrt
 from os.path import join
 from typing import List, Iterator, Union
 
-from spacy.cli import download
 from spacy.tokens import Token, Span
 
 from config import RESOURCES_PATH

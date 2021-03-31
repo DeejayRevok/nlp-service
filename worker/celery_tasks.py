@@ -21,7 +21,7 @@ def initialize_worker(*_, **__):
     Initialize the celery worker global variables
     """
     LOGGER.info('Initializing worker')
-    exchange_publisher: ExchangePublisher = container_builder.get('exchange_publisher')
+    exchange_publisher: ExchangePublisher = container_builder.get('news_service_lib.messaging.exchange_publisher')
     exchange_publisher.connect()
     exchange_publisher.initialize()
 
@@ -149,7 +149,8 @@ def publish_hydrated_new(new: dict = None, **_):
             LOGGER.info('Queue connection initialized, publishing...')
 
             new['hydrated'] = True
-            exchange_publisher: ExchangePublisher = container_builder.get('exchange_publisher')
+            exchange_publisher: ExchangePublisher = container_builder.get(
+                'news_service_lib.messaging.exchange_publisher')
 
             exchange_publisher(new)
             LOGGER.info('New published')

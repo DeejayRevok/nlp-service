@@ -62,7 +62,7 @@ class TestCeleryTasks(TestCase):
         container_builder.set('services.summary_service.SummaryService', cls.summarizer_mock)
         container_builder.set('services.sentiment_analysis_service.SentimentAnalysisService',
                               cls.sentiment_analyzer_mock)
-        container_builder.set('exchange_publisher', cls.exchange_publisher_mock)
+        container_builder.set('news_service_lib.messaging.exchange_publisher', cls.exchange_publisher_mock)
 
     @patch('worker.celery_tasks.CELERY_APP')
     def test_initialize_worker(self, _):
