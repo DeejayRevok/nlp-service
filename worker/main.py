@@ -11,8 +11,9 @@ from pypendency.loaders.py_loader import PyLoader
 from news_service_lib import profile_args_parser, add_logstash_handler
 from news_service_lib.base_celery_app import BaseCeleryApp
 from news_service_lib.redis_utils import build_redis_url
+from news_service_lib.server_utils import load_config
 
-from config import load_config, config
+from config import config, CONFIGS_PATH
 from log_config import LOG_CONFIG, get_logger
 from services.summary_service import initialize_summary_service
 
@@ -29,7 +30,7 @@ def main(profile: str):
         profile: profile used to run the app
 
     """
-    load_config(profile)
+    load_config(profile, CONFIGS_PATH, config)
     initialize_summary_service()
     PyLoader(container_builder).load(join(abspath(dirname(__file__)), 'container_config.py'))
 
