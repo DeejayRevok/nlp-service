@@ -11,7 +11,6 @@ class TestWorkerMain(TestCase):
     """
     Worker main entry point test cases implementation
     """
-    TEST_PROFILE = 'test'
 
     @patch('worker.main.build_redis_url')
     @patch('worker.main.config')
@@ -28,9 +27,9 @@ class TestWorkerMain(TestCase):
         Test the main entry point runner calls the minimum required actors
 
         """
-        main(self.TEST_PROFILE)
+        main('test')
 
-        load_config_mock.assert_called_with(self.TEST_PROFILE)
+        load_config_mock.assert_called()
         py_loader_mock().load.assert_called_once()
         celery_app_mock.configure.assert_called_once()
         celery_app_mock.run.assert_called_once()
