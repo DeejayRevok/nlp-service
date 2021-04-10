@@ -12,5 +12,6 @@ nltk==3.5
 networkx==2.4
 spacy==3.0.3
 dynaconf
-elastic-apm
+elastic-apm==6.0.0
 pypendency==0.1.0
+dacite==1.6.0

@@ -1,14 +1,17 @@
 """
 Celery tasks implementation module
 """
+from dataclasses import asdict
+
 from celery.signals import worker_process_init, worker_process_shutdown
-from pypendency.builder import container_builder
+from dacite import from_dict
 
 from news_service_lib.messaging import ExchangePublisher
 from news_service_lib.models import New, NamedEntity
 
 from config import config
 from log_config import get_logger
+from worker.container_config import container
 from worker.main import CELERY_APP
 from worker.utils.chained_task import ChainedTask
 
@@ -18,10 +21,10 @@ LOGGER = get_logger()
 @worker_process_init.connect()
 def initialize_worker(*_, **__):
     """
-    Initialize the celery worker global variables
+    Initialize the celery worker process environment
     """
     LOGGER.info('Initializing worker')
-    exchange_publisher: ExchangePublisher = container_builder.get('news_service_lib.messaging.exchange_publisher')
+    exchange_publisher: ExchangePublisher = container.get('exchange_publisher')
     exchange_publisher.connect()
     exchange_publisher.initialize()
 
@@ -39,7 +42,7 @@ def process_new_content(new: dict = None, **_):
     """
     LOGGER.info('NLP Processing new %s', new['title'])
 
-    nlp_service = container_builder.get('services.nlp_service.NlpService')
+    nlp_service = container.get('nlp_service')
     if nlp_service is not None:
         processed_content = nlp_service.process_text(new['content'])
         return nlp_service.doc_to_json_dict(processed_content)
@@ -61,8 +64,8 @@ def summarize(nlp_doc: dict = None, **_):
     """
     LOGGER.info('Generating summary')
 
-    nlp_service = container_builder.get('services.nlp_service.NlpService')
-    summarizer = container_builder.get('services.summary_service.SummaryService')
+    nlp_service = container.get('nlp_service')
+    summarizer = container.get('summary_service')
     if summarizer is not None:
         if nlp_doc is not None:
             doc = nlp_service.doc_from_json_dict(nlp_doc)
@@ -88,8 +91,8 @@ def sentiment_analysis(nlp_doc: dict = None, **_):
     """
     LOGGER.info('Generating sentiment score')
 
-    nlp_service = container_builder.get('services.nlp_service.NlpService')
-    sentiment_analyzer = container_builder.get('services.sentiment_analysis_service.SentimentAnalysisService')
+    nlp_service = container.get('nlp_service')
+    sentiment_analyzer = container.get('sentiment_analysis_service')
     if sentiment_analyzer is not None:
         if nlp_doc is not None:
             doc = nlp_service.doc_from_json_dict(nlp_doc)
@@ -118,7 +121,7 @@ def hydrate_new(new: dict = None, nlp_doc: dict = None, summary: str = None, sen
 
     """
     LOGGER.info('Hydrating new %s', new['title'])
-    new = New(**new)
+    new = from_dict(New, new)
 
     if summary is not None:
         new.summary = summary
@@ -126,14 +129,16 @@ def hydrate_new(new: dict = None, nlp_doc: dict = None, summary: str = None, sen
     if sentiment is not None:
         new.sentiment = sentiment
 
-    nlp_service = container_builder.get('services.nlp_service.NlpService')
+    nlp_service = container.get('nlp_service')
     if nlp_doc is not None:
         doc = nlp_service.doc_from_json_dict(nlp_doc)
         new.entities = list(
             set(map(lambda entity: NamedEntity(text=str(entity), type=entity.label_), doc.ents)))
         new.noun_chunks = list(map(lambda chunk: str(chunk), doc.noun_chunks))
 
-    return dict(new)
+    new.hydrated = True
+
+    return asdict(new)
 
 
 @CELERY_APP.app.task(name='publish_hydrated_new', base=ChainedTask)
@@ -148,11 +153,9 @@ def publish_hydrated_new(new: dict = None, **_):
         if config.rabbit is not None:
             LOGGER.info('Queue connection initialized, publishing...')
 
-            new['hydrated'] = True
-            exchange_publisher: ExchangePublisher = container_builder.get(
-                'news_service_lib.messaging.exchange_publisher')
-
+            exchange_publisher: ExchangePublisher = container.get('exchange_publisher')
             exchange_publisher(new)
+
             LOGGER.info('New published')
         else:
             LOGGER.warning('Queue connection configuration not initialized, skipping publish...')
@@ -166,5 +169,5 @@ def shutdown_worker(*_, **__):
     Shutdown the celery worker shutting down the exchange publisher
     """
     LOGGER.info('Shutting down worker')
-    exchange_publisher: ExchangePublisher = container_builder.get('exchange_publisher')
+    exchange_publisher: ExchangePublisher = container.get('exchange_publisher')
     exchange_publisher.shutdown()

@@ -1,13 +1,10 @@
 """
 Main nlp celery worker module
 """
-from os.path import dirname, join, abspath
-
 from celery.concurrency import asynpool
 from elasticapm import Client
 from elasticapm.contrib.celery import register_instrumentation, register_exception_tracking
-from pypendency.builder import container_builder
-from pypendency.loaders.py_loader import PyLoader
+
 from news_service_lib import profile_args_parser, add_logstash_handler
 from news_service_lib.base_celery_app import BaseCeleryApp
 from news_service_lib.redis_utils import build_redis_url
@@ -16,6 +13,7 @@ from news_service_lib.server_utils import load_config
 from config import config, CONFIGS_PATH
 from log_config import LOG_CONFIG, get_logger
 from services.summary_service import initialize_summary_service
+from worker.container_config import load, container
 
 LOGGER = get_logger()
 asynpool.PROC_ALIVE_TIMEOUT = 60.0
@@ -32,7 +30,7 @@ def main(profile: str):
     """
     load_config(profile, CONFIGS_PATH, config)
     initialize_summary_service()
-    PyLoader(container_builder).load(join(abspath(dirname(__file__)), 'container_config.py'))
+    load()
 
     add_logstash_handler(LOG_CONFIG, config.logstash.host, config.logstash.port)
     CELERY_APP.configure(task_queue_name='nlp-worker',
@@ -43,7 +41,7 @@ def main(profile: str):
     apm_client = Client(config={
         'SERVICE_NAME': config.elastic_apm.service_name,
         'SECRET_TOKEN': config.elastic_apm.secret_token,
-        'SERVER_URL': f'http://{config.elastic_apm.host}:{config.elastic_apm.port}'
+        'SERVER_URL': config.elastic_apm.url
     })
     register_instrumentation(apm_client)
     register_exception_tracking(apm_client)

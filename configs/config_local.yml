@@ -1,8 +1,7 @@
 elastic_apm:
   service_name: nlp-service
   secret_token: xxVpmQB2HMzCL9PgBHVrnxjNXXw5J7bd79DFm6sjBJR5HPXDhcF8MSb3vv4bpg44
-  host: localhost
-  port: 8200
+  url: http://localhost:8200
 
 logstash:
   host: localhost
