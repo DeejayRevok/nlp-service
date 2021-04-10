@@ -1,18 +1,24 @@
 """
 Celery tasks unit tests module
 """
+from dataclasses import asdict
 from unittest import TestCase
-from unittest.mock import patch, MagicMock
+from unittest.mock import patch, Mock, MagicMock
 
 from dynaconf.loaders import settings_loader
-from pypendency.builder import container_builder
 from spacy.cli import download
-from news_service_lib.models import New, NamedEntity, NLPDoc
+from spacy.tokens import Doc
+
+from news_service_lib.models import New, NamedEntity
 
 from config import config
+from services.nlp_service import NlpService
+from services.sentiment_analysis_service import SentimentAnalysisService
+from services.summary_service import SummaryService
 from tests import TEST_CONFIG_PATH
 from worker.celery_tasks import initialize_worker, process_new_content, hydrate_new, summarize, publish_hydrated_new, \
     sentiment_analysis
+from worker.container_config import container
 
 
 class TestNamedEntity:
@@ -36,12 +42,12 @@ class TestCeleryTasks(TestCase):
                    date=123123.0)
     TEST_ENTITIES = [NamedEntity(text='Test_ENTITY_text', type='test_entity_type')]
     TEST_NAMED_ENTITIES = [('Test_ENTITY_text', 'test_entity_type'), ('Test_ENTITY_text', 'test_entity_type')]
-    TEST_PROCESSED_TEXT = NLPDoc(sentences=['test_sentence_1', 'test_sentence_2'],
-                                 named_entities=TEST_NAMED_ENTITIES,
-                                 noun_chunks=['test_noun_chunk'])
     TEST_NOUN_CHUNKS = ['Test_noun_chunk1', 'Test_noun_chunk2']
     TEST_SUMMARY = 'Test summary'
     TEST_SENTIMENT = 0.4
+    TEST_PROCESSED_TEXT = dict(sentences=['test_sentence_1', 'test_sentence_2'],
+                               named_entities=TEST_NAMED_ENTITIES,
+                               noun_chunks=['test_noun_chunk'])
 
     TEST_NLP_SERVICE_CONFIG = dict(protocol='test_protocol', host='test_host', port='0')
     TEST_QUEUE_CONFIG = dict(host='test_host', port='0', user='test_user', password='test_password')
@@ -53,16 +59,17 @@ class TestCeleryTasks(TestCase):
         """
         download('es_core_news_md')
 
-        cls.nlp_service_mock = MagicMock()
-        cls.summarizer_mock = MagicMock()
-        cls.sentiment_analyzer_mock = MagicMock()
+        container.reset()
+
+        cls.nlp_service_mock = Mock(spec=NlpService)
+        cls.summarizer_mock = Mock(spec=SummaryService)
+        cls.sentiment_analyzer_mock = Mock(spec=SentimentAnalysisService)
         cls.exchange_publisher_mock = MagicMock()
 
-        container_builder.set('services.nlp_service.NlpService', cls.nlp_service_mock)
-        container_builder.set('services.summary_service.SummaryService', cls.summarizer_mock)
-        container_builder.set('services.sentiment_analysis_service.SentimentAnalysisService',
-                              cls.sentiment_analyzer_mock)
-        container_builder.set('news_service_lib.messaging.exchange_publisher', cls.exchange_publisher_mock)
+        container.set('nlp_service', cls.nlp_service_mock)
+        container.set('summary_service', cls.summarizer_mock)
+        container.set('sentiment_analysis_service', cls.sentiment_analyzer_mock)
+        container.set('exchange_publisher', cls.exchange_publisher_mock)
 
     @patch('worker.celery_tasks.CELERY_APP')
     def test_initialize_worker(self, _):
@@ -79,26 +86,27 @@ class TestCeleryTasks(TestCase):
         """
         Test processing the text returns the dictionary representation of the doc object
         """
-        self.nlp_service_mock.doc_to_json_dict.return_value = dict(self.TEST_PROCESSED_TEXT)
+        self.nlp_service_mock.doc_to_json_dict.return_value = self.TEST_PROCESSED_TEXT
 
-        nlp_doc = process_new_content(dict(self.TEST_NEW))
-        self.assertEqual(nlp_doc, dict(self.TEST_PROCESSED_TEXT))
+        nlp_doc = process_new_content(asdict(self.TEST_NEW))
+        self.assertEqual(nlp_doc, self.TEST_PROCESSED_TEXT)
 
     @patch('worker.celery_tasks.CELERY_APP')
     def test_hydrate_new(self, _):
         """
         Test hydrating the new hydrates all provided parameters
         """
-        spacy_doc_mock = MagicMock()
+        spacy_doc_mock = Mock(spec=Doc)
         spacy_doc_mock.ents = [TestNamedEntity('Test_ENTITY_text', 'test_entity_type')]
         spacy_doc_mock.noun_chunks = self.TEST_NOUN_CHUNKS
         self.nlp_service_mock.doc_from_json_dict.return_value = spacy_doc_mock
 
-        new = hydrate_new(dict(self.TEST_NEW), dict(self.TEST_PROCESSED_TEXT), self.TEST_SUMMARY, self.TEST_SENTIMENT)
-        self.assertListEqual(new['entities'], [dict(entity) for entity in self.TEST_ENTITIES])
+        new = hydrate_new(asdict(self.TEST_NEW), self.TEST_PROCESSED_TEXT, self.TEST_SUMMARY, self.TEST_SENTIMENT)
+        self.assertListEqual(new['entities'], [asdict(entity) for entity in self.TEST_ENTITIES])
         self.assertListEqual(new['noun_chunks'], self.TEST_NOUN_CHUNKS)
         self.assertEqual(new['summary'], self.TEST_SUMMARY)
         self.assertEqual(new['sentiment'], self.TEST_SENTIMENT)
+        self.assertTrue(new['hydrated'])
 
     @patch('worker.celery_tasks.CELERY_APP')
     def test_summarize(self, _):
@@ -108,12 +116,12 @@ class TestCeleryTasks(TestCase):
         self.summarizer_mock.return_value = self.TEST_SUMMARY
 
         test_sentences = ['Sentence number one', 'Sentence number two']
-        spacy_doc_mock = MagicMock()
+        spacy_doc_mock = Mock(spec=Doc)
         spacy_doc_mock.sents = test_sentences
         spacy_doc_mock.noun_chunks = self.TEST_NOUN_CHUNKS
         self.nlp_service_mock.doc_from_json_dict.return_value = spacy_doc_mock
 
-        summary = summarize(dict(self.TEST_PROCESSED_TEXT))
+        summary = summarize(self.TEST_PROCESSED_TEXT)
         self.assertEqual(summary, self.TEST_SUMMARY)
         self.summarizer_mock.assert_called_with(test_sentences)
 
@@ -125,12 +133,12 @@ class TestCeleryTasks(TestCase):
         self.sentiment_analyzer_mock.return_value = self.TEST_SENTIMENT
 
         test_sentences = ['Sentence number one', 'Sentence number two']
-        spacy_doc_mock = MagicMock()
+        spacy_doc_mock = Mock(spec=Doc)
         spacy_doc_mock.sents = test_sentences
         spacy_doc_mock.noun_chunks = self.TEST_NOUN_CHUNKS
         self.nlp_service_mock.doc_from_json_dict.return_value = spacy_doc_mock
 
-        sentiment = sentiment_analysis(dict(self.TEST_PROCESSED_TEXT))
+        sentiment = sentiment_analysis(self.TEST_PROCESSED_TEXT)
         self.assertEqual(sentiment, self.TEST_SENTIMENT)
         self.sentiment_analyzer_mock.assert_called_with(test_sentences)
 
@@ -142,8 +150,7 @@ class TestCeleryTasks(TestCase):
         """
         settings_loader(config, filename=TEST_CONFIG_PATH)
 
-        publish_hydrated_new(dict(self.TEST_NEW))
+        publish_hydrated_new(asdict(self.TEST_NEW))
 
-        expected_new = dict(self.TEST_NEW)
-        expected_new['hydrated'] = True
+        expected_new = asdict(self.TEST_NEW)
         self.exchange_publisher_mock.assert_called_with(expected_new)
