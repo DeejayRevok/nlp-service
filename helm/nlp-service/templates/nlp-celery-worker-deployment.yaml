@@ -1,0 +1,46 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  annotations:
+    kompose.cmd: C:\ProgramData\chocolatey\lib\kubernetes-kompose\tools\kompose.exe
+      convert -c -f docker\news-service.yml
+    kompose.version: 1.21.0 (992df58d8)
+  creationTimestamp: null
+  labels:
+    io.kompose.service: nlp-celery-worker
+  name: nlp-celery-worker
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      io.kompose.service: nlp-celery-worker
+  strategy: {}
+  template:
+    metadata:
+      annotations:
+        kompose.cmd: C:\ProgramData\chocolatey\lib\kubernetes-kompose\tools\kompose.exe
+          convert -c -f docker\news-service.yml
+        kompose.version: 1.21.0 (992df58d8)
+      creationTimestamp: null
+      labels:
+        io.kompose.service: nlp-celery-worker
+    spec:
+      containers:
+      - envFrom:
+          - configMapRef:
+              name: nlp-service-configmap
+        image: djrevok/nlp-celery-worker:latest
+        imagePullPolicy: ""
+        livenessProbe:
+          exec:
+            command:
+            - celery -b amqp://guest:guest@rabbitmq:5672 inspect ping -d celery@$HOSTNAME
+          failureThreshold: 10
+          periodSeconds: 2
+          timeoutSeconds: 20
+        name: nlp-celery-worker
+        resources: {}
+      restartPolicy: Always
+      serviceAccountName: ""
+      volumes: null
+status: {}
