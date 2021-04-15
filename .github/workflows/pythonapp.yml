@@ -18,9 +18,9 @@ jobs:
           python -m pip install --upgrade pip
           pip install -r requirements.txt
       - name: Lint and check score
-        run: pylint-fail-under --fail_under 9  --ignore=Dockerfile,README.md,requirements.txt ./*
+        run: pylint-fail-under --fail_under 9  --ignore=Dockerfile,README.md,requirements.txt,helm ./*
       - name: Test with unittest
-        run: coverage run --source ./ --branch --omit=*__init__**,**tests**,**container_config.py** -m unittest discover -v ./tests
+        run: coverage run --source ./ --branch --omit=*__init__**,**tests**,**container_config.py**,helm -m unittest discover -v ./tests
       - name: Check test coverage
         run: coverage report  --fail-under=80
       - name: Generate coverage report
