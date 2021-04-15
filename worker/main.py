@@ -30,7 +30,7 @@ def main(profile: str):
         profile: profile used to run the app
 
     """
-    load_config(profile, CONFIGS_PATH, config)
+    load_config(profile, CONFIGS_PATH, config, 'NLP_SERVICE')
     initialize_summary_service()
     load()
     publisher = container.get('exchange_publisher')
