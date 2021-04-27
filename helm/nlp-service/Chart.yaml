@@ -1,6 +1,7 @@
 name: nlp-service
 description: NLP service helm chart
-version: 0.1.0
+version: 0.0.0
+appVersion: latest
 apiVersion: v1
 keywords:
   - nlp-service

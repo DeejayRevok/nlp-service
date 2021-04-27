@@ -21,7 +21,7 @@ spec:
       - envFrom:
           - configMapRef:
               name: nlp-service-configmap
-        image: djrevok/nlp-celery-worker:latest
+        image: 'djrevok/nlp-celery-worker:{{ .Chart.AppVersion }}'
         imagePullPolicy: ""
         name: nlp-celery-worker
         resources: {}
