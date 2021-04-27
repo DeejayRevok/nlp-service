@@ -1,10 +1,13 @@
-name: NLP Services
+name: NLP Service CI
 
-on: [push]
+on:
+  push:
+    branches-ignore:
+      - master
 
 jobs:
 
-  nlp-celery-worker-CI:
+  nlp-service-CI:
     runs-on: ubuntu-latest
 
     steps:
