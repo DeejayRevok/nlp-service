@@ -12,27 +12,30 @@ jobs:
 
     steps:
       - uses: actions/checkout@v2
-      - name: Set up Python 3.7
+      - name: Set up Python 3.8
         uses: actions/setup-python@v1
         with:
           python-version: 3.8
       - name: Install dependencies
         run: |
-          python -m pip install --upgrade pip
-          pip install -r requirements.txt
-      - name: Lint and check score
-        run: pylint-fail-under --fail_under 9  --ignore=Dockerfile,README.md,requirements.txt,helm ./*
+          pip install --upgrade pip
+          pip install -r requirements-dev.txt
+          pip install -r requirements-prod.txt
+      - name: Check formatting
+        run: tox -e black -- --check
+      - name: Check style
+        run: tox -e flake8
       - name: Test with unittest
-        run: coverage run --source ./ --branch --omit=*__init__**,**tests**,**container_config.py**,helm -m unittest discover -v ./tests
+        run: tox -e tests
       - name: Check test coverage
-        run: coverage report  --fail-under=80
+        run: tox -e coverage_check
       - name: Generate coverage report
-        run: coverage xml -o coverage_nlp_celery_worker.xml
+        run: tox -e coverage_report
       - name: Codecov upload
         uses: codecov/codecov-action@v1.0.5
         with:
           token: ${{ secrets.CODECOV_TOKEN }}
-          file: coverage_nlp_celery_worker.xml
+          file: coverage_nlp_service.xml
       - name: Build the docker image
         run: docker build -t djrevok/nlp-celery-worker:latest .
       - name: Login to docker hub
