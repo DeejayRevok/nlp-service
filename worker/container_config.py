@@ -20,8 +20,7 @@ def load():
     nlp_service = NlpService()
     container.set("nlp_service", nlp_service)
     container.set("summary_service", SummaryService())
-    container.set("sentiment_analysis_service",  SentimentAnalysisService(nlp_service))
-    container.set("exchange_publisher",
-                  ExchangePublisher(**config.rabbit,
-                                    exchange='news-internal-exchange',
-                                    logger=get_logger()))
+    container.set("sentiment_analysis_service", SentimentAnalysisService(nlp_service))
+    container.set(
+        "exchange_publisher", ExchangePublisher(**config.rabbit, exchange="news-internal-exchange", logger=get_logger())
+    )

@@ -18,21 +18,22 @@ class SentimentAnalysisService:
     """
     Sentiment analyzer implementation
     """
+
     def __init__(self, nlp_service: NlpService):
         """
         Initialize the sentiment analyzer loading the required lexicons and loading the required nlp components
         """
         self._nlp_service = nlp_service
-        with open(join(RESOURCES_PATH, 'sentiment_lexicon/booster_increase.txt'), 'r') as file:
+        with open(join(RESOURCES_PATH, "sentiment_lexicon/booster_increase.txt"), "r") as file:
             self._boosters_increase = list(map(lambda word: word.strip(), file.readlines()))
 
-        with open(join(RESOURCES_PATH, 'sentiment_lexicon/booster_decrease.txt'), 'r') as file:
+        with open(join(RESOURCES_PATH, "sentiment_lexicon/booster_decrease.txt"), "r") as file:
             self._boosters_decrease = list(map(lambda word: word.strip(), file.readlines()))
 
-        with open(join(RESOURCES_PATH, 'sentiment_lexicon/negative_lexicon.txt'), 'r') as file:
+        with open(join(RESOURCES_PATH, "sentiment_lexicon/negative_lexicon.txt"), "r") as file:
             self._negatives = list(map(lambda word: word.strip(), file.readlines()))
 
-        with open(join(RESOURCES_PATH, 'sentiment_lexicon/positive_lexicon.txt'), 'r') as file:
+        with open(join(RESOURCES_PATH, "sentiment_lexicon/positive_lexicon.txt"), "r") as file:
             self._positives = list(map(lambda word: word.strip(), file.readlines()))
 
     def __call__(self, sentences: Union[List[str], List[Span]]) -> float:
@@ -45,7 +46,7 @@ class SentimentAnalysisService:
         Returns: overall sentiment of the input sentences
 
         """
-        LOGGER.info('Starting sentiment analysis for %d sentences', len(sentences))
+        LOGGER.info("Starting sentiment analysis for %d sentences", len(sentences))
         sentiment = 0
         for sentence in sentences:
             sentiment += self._get_sentence_sentiment(sentence)
@@ -66,7 +67,7 @@ class SentimentAnalysisService:
         for token in sentence:
             sentence_sentiment += self._get_token_sentiment(token)
 
-        return sentence_sentiment/sqrt(sentence_sentiment*sentence_sentiment + 15)
+        return sentence_sentiment / sqrt(sentence_sentiment * sentence_sentiment + 15)
 
     def _get_token_sentiment(self, token: Token) -> float:
         """
@@ -97,11 +98,11 @@ class SentimentAnalysisService:
 
         """
         for children in token_childrens:
-            if children.pos_ == 'ADV':
+            if children.pos_ == "ADV":
                 if children.lemma_.lower() in self._boosters_increase:
                     sentiment = 1.2 * sentiment
                 elif children.lemma_.lower() in self._boosters_decrease:
                     sentiment = 0.8 * sentiment
-                elif children.lower_ == 'no':
+                elif children.lower_ == "no":
                     sentiment = -sentiment
         return sentiment

@@ -22,14 +22,15 @@ def initialize_summary_service():
     """
     Initialize the summarizer NLP resources
     """
-    LOGGER.info('Downloading stopwords...')
-    download('stopwords')
+    LOGGER.info("Downloading stopwords...")
+    download("stopwords")
 
 
 class SummaryService:
     """
     Summary generator service implementation
     """
+
     def __call__(self, sentences: Union[List[str], List[Span]]) -> str:
         """
         Generate the summary of the input sentences with the given number of sentences in the output
@@ -42,8 +43,8 @@ class SummaryService:
         Returns: sentences summary
 
         """
-        LOGGER.info('Generating summary for %d input sentences', len(sentences))
-        stop_words = stopwords.words('spanish')
+        LOGGER.info("Generating summary for %d input sentences", len(sentences))
+        stop_words = stopwords.words("spanish")
 
         if stop_words is None:
             stop_words = list()
@@ -51,8 +52,8 @@ class SummaryService:
         preprocessed_sentences = list(self._preprocess_sentences(sentences, stop_words))
 
         sentence_similarity_matrix = self._build_similarity_matrix(
-            map(lambda prep_sent: prep_sent[0], preprocessed_sentences),
-            stop_words)
+            map(lambda prep_sent: prep_sent[0], preprocessed_sentences), stop_words
+        )
 
         sentence_distance_graph = nx.from_numpy_array(sentence_similarity_matrix)
         scores = nx.pagerank(sentence_distance_graph)
@@ -76,11 +77,12 @@ class SummaryService:
             sentence = sentences[i] if isinstance(sentences[i], str) else str(sentences[i])
             summarize_text_sentences.append(sentence)
 
-        return ' '.join(summarize_text_sentences)
+        return " ".join(summarize_text_sentences)
 
     @staticmethod
-    def _preprocess_sentences(sentences: Union[List[str], List[Span]],
-                              stop_words: List[str]) -> Iterator[Tuple[List[str], float]]:
+    def _preprocess_sentences(
+        sentences: Union[List[str], List[Span]], stop_words: List[str]
+    ) -> Iterator[Tuple[List[str], float]]:
         """
         Preprocess sentences transforming them into a list of cleaned words and calculating their entropy
 
@@ -93,8 +95,9 @@ class SummaryService:
         """
         for sentence in sentences:
             sentence = sentence if isinstance(sentence, str) else str(sentence)
-            sentence_words = [word.translate(str.maketrans('', '', string.punctuation)).lower() for word in
-                              sentence.split(' ')]
+            sentence_words = [
+                word.translate(str.maketrans("", "", string.punctuation)).lower() for word in sentence.split(" ")
+            ]
             yield sentence_words, SummaryService._get_sentence_entropy(sentence_words, stop_words)
 
     @staticmethod
@@ -130,8 +133,9 @@ class SummaryService:
             for idx2, _ in enumerate(sentences):
                 if idx1 == idx2:
                     continue
-                similarity_matrix[idx1][idx2] = SummaryService._sentence_similarity(sentences[idx1], sentences[idx2],
-                                                                                    stop_words)
+                similarity_matrix[idx1][idx2] = SummaryService._sentence_similarity(
+                    sentences[idx1], sentences[idx2], stop_words
+                )
 
         return similarity_matrix
 
@@ -167,8 +171,12 @@ class SummaryService:
         return 1 - result if not math.isnan(result) else 0.0
 
     @staticmethod
-    def _clean_qualifiers(qualifiers: List[int], non_qualifiers: List[int], sentence_similarity_matrix: np.ndarray,
-                          preprocessed_sentences: List[Tuple[List[str], float]]):
+    def _clean_qualifiers(
+        qualifiers: List[int],
+        non_qualifiers: List[int],
+        sentence_similarity_matrix: np.ndarray,
+        preprocessed_sentences: List[Tuple[List[str], float]],
+    ):
         """
         Clean the summary sentence qualifiers in order to remove similar sentences
         (more of 75% of the sentence is equal)
@@ -181,9 +189,12 @@ class SummaryService:
 
         """
         qualifiers_similarity_matrix = sentence_similarity_matrix.take([qualifiers, list(reversed(qualifiers))])
-        similar_qualifiers = set(map(lambda indexes: tuple(sorted(indexes)),
-                                     filter(lambda indexes: len(indexes) > 0,
-                                            np.where(qualifiers_similarity_matrix > 0.75))))
+        similar_qualifiers = set(
+            map(
+                lambda indexes: tuple(sorted(indexes)),
+                filter(lambda indexes: len(indexes) > 0, np.where(qualifiers_similarity_matrix > 0.75)),
+            )
+        )
         if len(non_qualifiers) > 0 and len(similar_qualifiers) > 0:
             for idx1, idx2 in set(map(lambda indexes: tuple(sorted(indexes)), list(similar_qualifiers))):
                 if len(non_qualifiers) > 0:
@@ -192,5 +203,6 @@ class SummaryService:
                     else:
                         del qualifiers[idx1]
                     qualifiers.append(non_qualifiers.pop(0))
-            SummaryService._clean_qualifiers(qualifiers, non_qualifiers, sentence_similarity_matrix,
-                                             preprocessed_sentences)
+            SummaryService._clean_qualifiers(
+                qualifiers, non_qualifiers, sentence_similarity_matrix, preprocessed_sentences
+            )
