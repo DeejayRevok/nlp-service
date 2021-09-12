@@ -2,7 +2,7 @@
 Worker application container configuration module
 """
 from news_service_lib.configurable_container import ConfigurableContainer
-from news_service_lib.messaging import ExchangePublisher
+from news_service_lib.messaging.exchange_publisher import ExchangePublisher
 
 from config import config
 from log_config import get_logger

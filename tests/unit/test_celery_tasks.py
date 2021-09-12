@@ -9,7 +9,8 @@ from dynaconf.loaders import settings_loader
 from spacy.cli import download
 from spacy.tokens import Doc
 
-from news_service_lib.models import New, NamedEntity
+from news_service_lib.models.new import New
+from news_service_lib.models.named_entity import NamedEntity
 
 from config import config
 from services.nlp_service import NlpService

@@ -6,8 +6,9 @@ from dataclasses import asdict
 from celery.signals import worker_process_init, worker_process_shutdown
 from dacite import from_dict
 
-from news_service_lib.messaging import ExchangePublisher
-from news_service_lib.models import New, NamedEntity
+from news_service_lib.messaging.exchange_publisher import ExchangePublisher
+from news_service_lib.models.new import New
+from news_service_lib.models.named_entity import NamedEntity
 
 from config import config
 from log_config import get_logger
