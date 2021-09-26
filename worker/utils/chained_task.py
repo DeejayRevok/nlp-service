@@ -40,8 +40,14 @@ class ChainedTask(Task, ABC):
             remaining_args.extend(args)
         return remaining_args, kwargs
 
-    def __call__(self, *args: list, carry_args: bool = False, return_kwargs: bool = False, result_name: str = None,
-                 **kwargs: dict) -> Any:
+    def __call__(
+        self,
+        *args: list,
+        carry_args: bool = False,
+        return_kwargs: bool = False,
+        result_name: str = None,
+        **kwargs: dict,
+    ) -> Any:
         """
         Call the celery task implementation applying the modification to the arguments indicated by the flags
 

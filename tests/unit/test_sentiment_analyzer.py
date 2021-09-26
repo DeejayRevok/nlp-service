@@ -11,17 +11,17 @@ from services.sentiment_analysis_service import SentimentAnalysisService
 
 class TestSentimentAnalyzer(TestCase):
 
-    TEST_NEGATIVE_SENTENCES = ['Esta frase es algo buena', 'Esta frase es mala', 'Esta frase es muy negativa']
-    TEST_POSITIVE_SENTENCES = ['Esta frase es algo mala', 'Esta frase es buena', 'Esta frase es muy buena']
-    TEST_POSITIVE_NEGATED_SENTENCE = ['Esta frase no es buena']
-    TEST_NEGATIVE_NEGATED_SENTENCE = ['Esta frase no es mala']
+    TEST_NEGATIVE_SENTENCES = ["Esta frase es algo buena", "Esta frase es mala", "Esta frase es muy negativa"]
+    TEST_POSITIVE_SENTENCES = ["Esta frase es algo mala", "Esta frase es buena", "Esta frase es muy buena"]
+    TEST_POSITIVE_NEGATED_SENTENCE = ["Esta frase no es buena"]
+    TEST_NEGATIVE_NEGATED_SENTENCE = ["Esta frase no es mala"]
 
     @classmethod
     def setUpClass(cls) -> None:
         """
         Set up the tests environment
         """
-        download('es_core_news_md')
+        download("es_core_news_md")
 
     def test_negative_sentiment(self):
         """
@@ -58,6 +58,3 @@ class TestSentimentAnalyzer(TestCase):
         sentiment_analyzer = SentimentAnalysisService(nlp_service)
         sentiment_score = sentiment_analyzer(self.TEST_NEGATIVE_NEGATED_SENTENCE)
         self.assertGreater(sentiment_score, 0)
-
-
-
