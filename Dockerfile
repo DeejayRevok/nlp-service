@@ -22,4 +22,4 @@ COPY ./tools_config/metricbeat.yml /etc/metricbeat/metricbeat.yml
 RUN python -m spacy download 'es_core_news_md'
 RUN python -m spacy download 'en_core_web_md'
 
-CMD service metricbeat start && export PYTHONPATH=${PYTHONPATH}:/app/nlp_service && python ./nlp_service/worker/main.py -p DOCKER
+CMD service metricbeat start && export PYTHONPATH=${PYTHONPATH}:/app/nlp_service && python ./nlp_service/worker/main.py -c ./nlp_service/configs/config_docker.yml
