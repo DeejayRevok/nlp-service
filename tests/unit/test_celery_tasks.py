@@ -114,7 +114,7 @@ class TestCeleryTasks(TestCase):
         summary = summarize(self.TEST_NEW.language, self.TEST_PROCESSED_TEXT)
 
         self.assertEqual(summary, self.TEST_SUMMARY)
-        self.summary_manager_mock.assert_called_with(self.TEST_NEW.language, test_sentences)
+        self.summary_manager_mock.summarize.assert_called_with(self.TEST_NEW.language, test_sentences)
 
     @patch("worker.celery_tasks.CELERY_APP")
     def test_sentiment_analysis(self, _):
@@ -128,7 +128,7 @@ class TestCeleryTasks(TestCase):
         sentiment = sentiment_analysis(self.TEST_NEW.language, self.TEST_PROCESSED_TEXT)
 
         self.assertEqual(sentiment, self.TEST_SENTIMENT)
-        self.sentiment_analysis_manager_mock.assert_called_with(self.TEST_NEW.language, test_sentences)
+        self.sentiment_analysis_manager_mock.analyze.assert_called_with(self.TEST_NEW.language, test_sentences)
 
     @patch("worker.celery_tasks.CELERY_APP")
     def test_publish_new(
