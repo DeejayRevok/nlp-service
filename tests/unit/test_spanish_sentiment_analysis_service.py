@@ -19,22 +19,24 @@ class TestSpanishSentimentAnalysisService(TestCase):
 
     def setUp(self) -> None:
         self.nlp_service = SpanishNLPService()
-        self.sentiment_analysis_service = SpanishSentimentAnalysisService(self.nlp_service)
+        self.spanish_sentiment_analysis_service = SpanishSentimentAnalysisService(self.nlp_service)
 
     def test_negative_sentiment(self):
-        sentiment_score = self.sentiment_analysis_service.analyze(self.TEST_NEGATIVE_SENTENCES)
+        sentiment_score = self.spanish_sentiment_analysis_service.analyze(self.TEST_NEGATIVE_SENTENCES)
 
         self.assertLess(sentiment_score, 0)
 
     def test_positive_sentiment(self):
-        sentiment_score = self.sentiment_analysis_service.analyze(self.TEST_POSITIVE_SENTENCES)
+        sentiment_score = self.spanish_sentiment_analysis_service.analyze(self.TEST_POSITIVE_SENTENCES)
 
         self.assertGreater(sentiment_score, 0)
 
     def test_positive_negated_sentiment(self):
-        sentiment_score = self.sentiment_analysis_service.analyze(self.TEST_POSITIVE_NEGATED_SENTENCE)
+        sentiment_score = self.spanish_sentiment_analysis_service.analyze(self.TEST_POSITIVE_NEGATED_SENTENCE)
+
         self.assertLess(sentiment_score, 0)
 
     def test_negative_negated_sentiment(self):
-        sentiment_score = self.sentiment_analysis_service.analyze(self.TEST_NEGATIVE_NEGATED_SENTENCE)
+        sentiment_score = self.spanish_sentiment_analysis_service.analyze(self.TEST_NEGATIVE_NEGATED_SENTENCE)
+
         self.assertGreater(sentiment_score, 0)
