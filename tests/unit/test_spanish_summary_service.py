@@ -5,7 +5,7 @@ from services.summary.summary_service import initialize_summary_service
 from services.summary.spanish_summary_service import SpanishSummaryService
 
 
-class TestSpanishSummarizer(TestCase):
+class TestSpanishSummaryService(TestCase):
 
     TEST_INPUT_SENTENCES = [
         "Esta frase aporta significado.",
