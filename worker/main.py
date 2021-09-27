@@ -1,6 +1,3 @@
-"""
-Main nlp celery worker module
-"""
 import sys
 
 from celery.concurrency import asynpool
@@ -15,7 +12,8 @@ from news_service_lib.config_utils import load_config
 
 from config import config
 from log_config import LOG_CONFIG, get_logger
-from services.summary_service import initialize_summary_service
+from services.summary.summary_service import initialize_summary_service
+from services.sentiment_analysis.sentiment_analysis_service import initialize_sentiment_analysis_service
 from worker.container_config import load, container
 
 LOGGER = get_logger()
@@ -24,15 +22,9 @@ CELERY_APP = BaseCeleryApp("Nlp service worker", ["worker.celery_tasks"])
 
 
 def main(config_file_path: str):
-    """
-    Celery worker main entry point
-
-    Args:
-        config_file_path: path to configuration file
-
-    """
     load_config(config_file_path, config, "NLP_SERVICE")
     initialize_summary_service()
+    initialize_sentiment_analysis_service()
     load()
     publisher = container.get("exchange_publisher")
     if not publisher.test_connection():
