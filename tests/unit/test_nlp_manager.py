@@ -8,16 +8,12 @@ from services.nlp.nlp_service import NLPService
 
 
 class TestNLPManager(TestCase):
-
     def setUp(self) -> None:
         self.language1 = "language1"
         self.language2 = "language2"
         self.nlp_service1_mock = Mock(spec=NLPService)
         self.nlp_service2_mock = Mock(spec=NLPService)
-        self.nlp_manager = NLPManager(**{
-            "language1": self.nlp_service1_mock,
-            "language2": self.nlp_service2_mock
-        })
+        self.nlp_manager = NLPManager(**{"language1": self.nlp_service1_mock, "language2": self.nlp_service2_mock})
 
     def test_process_text(self):
         test_text = "test_text"
