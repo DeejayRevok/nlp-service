@@ -11,7 +11,7 @@ LOGGER = get_logger()
 
 def initialize_sentiment_analysis_service():
     LOGGER.info("Downloading sentiment analysis lexicon...")
-    download('vader_lexicon')
+    download("vader_lexicon")
 
 
 class SentimentAnalysisService(Protocol):

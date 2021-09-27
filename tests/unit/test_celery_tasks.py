@@ -26,7 +26,6 @@ from worker.container_config import container
 
 
 class TestNamedEntity:
-
     def __init__(self, text, type_value):
         self.text = text
         self.label_ = type_value
@@ -43,7 +42,7 @@ class TestCeleryTasks(TestCase):
         content="test_content",
         source="test_source",
         date=123123.0,
-        language=Language.SPANISH.value
+        language=Language.SPANISH.value,
     )
     TEST_ENTITIES = [NamedEntity(text="Test_ENTITY_text", type="test_entity_type")]
     TEST_NAMED_ENTITIES = [("Test_ENTITY_text", "test_entity_type"), ("Test_ENTITY_text", "test_entity_type")]

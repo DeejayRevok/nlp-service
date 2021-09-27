@@ -9,7 +9,6 @@ LOGGER = get_logger()
 
 
 class EnglishSentimentAnalysisService(SentimentAnalysisService):
-
     def analyze(self, sentences: Union[List[str], List[Span]]) -> float:
         LOGGER.info("Starting sentiment analysis for %d sentences", len(sentences))
         sid = SentimentIntensityAnalyzer()
@@ -21,4 +20,4 @@ class EnglishSentimentAnalysisService(SentimentAnalysisService):
             sentence_score = sid.polarity_scores(sentence)
             sentence_scores.append(sentence_score["compound"])
 
-        return sum(sentence_scores)/len(sentence_scores)
+        return sum(sentence_scores) / len(sentence_scores)

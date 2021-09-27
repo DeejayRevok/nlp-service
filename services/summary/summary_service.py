@@ -20,7 +20,6 @@ def initialize_summary_service():
 
 
 class SummaryService:
-
     def __init__(self, stop_words: List[str]):
         self.__stop_words = stop_words
 
@@ -82,9 +81,7 @@ class SummaryService:
             for idx2, _ in enumerate(sentences):
                 if idx1 == idx2:
                     continue
-                similarity_matrix[idx1][idx2] = self.__sentence_similarity(
-                    sentences[idx1], sentences[idx2], stop_words
-                )
+                similarity_matrix[idx1][idx2] = self.__sentence_similarity(sentences[idx1], sentences[idx2], stop_words)
 
         return similarity_matrix
 
@@ -129,6 +126,4 @@ class SummaryService:
                     else:
                         del qualifiers[idx1]
                     qualifiers.append(non_qualifiers.pop(0))
-            self.__clean_qualifiers(
-                qualifiers, non_qualifiers, sentence_similarity_matrix, preprocessed_sentences
-            )
+            self.__clean_qualifiers(qualifiers, non_qualifiers, sentence_similarity_matrix, preprocessed_sentences)

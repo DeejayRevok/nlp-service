@@ -27,14 +27,14 @@ def load():
 
     summary_services = {
         Language.SPANISH.value: SpanishSummaryService(),
-        Language.ENGLISH.value: EnglishSummaryService()
+        Language.ENGLISH.value: EnglishSummaryService(),
     }
     summary_manager = SummaryManager(**summary_services)
     container.set("summary_manager", summary_manager)
 
     sentiment_analysis_services = {
         Language.SPANISH.value: SpanishSentimentAnalysisService(nlp_services[Language.SPANISH.value]),
-        Language.ENGLISH.value: EnglishSentimentAnalysisService()
+        Language.ENGLISH.value: EnglishSentimentAnalysisService(),
     }
     sentiment_analysis_manager = SentimentAnalysisManager(**sentiment_analysis_services)
     container.set("sentiment_analysis_manager", sentiment_analysis_manager)
