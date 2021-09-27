@@ -1,16 +1,11 @@
-"""
-Summarizer tests module
-"""
 from unittest import TestCase
 from unittest.mock import patch
 
-from services.summary_service import initialize_summary_service, SummaryService
+from services.summary.summary_service import initialize_summary_service
+from services.summary.spanish_summary_service import SpanishSummaryService
 
 
-class TestSummarizer(TestCase):
-    """
-    Summarizer test cases
-    """
+class TestSpanishSummaryService(TestCase):
 
     TEST_INPUT_SENTENCES = [
         "Esta frase aporta significado.",
@@ -27,21 +22,15 @@ class TestSummarizer(TestCase):
         "De eso y esto y la otra frase pero nada.",
     ]
 
-    @patch("services.summary_service.download")
-    def test_initialize_summarizer(self, download_mock):
-        """
-        Test the initialize summarizer downloads the required resources
-        """
+    @patch("services.summary.summary_service.download")
+    def test_initialize_summary_service(self, download_mock):
         initialize_summary_service()
         download_mock.assert_called_with("stopwords")
 
     def test_generate_summary_from_sentences(self):
-        """
-        Test the summary generation returns the correct summary
-        """
         initialize_summary_service()
-        summary_service = SummaryService()
-        summary = summary_service(self.TEST_INPUT_SENTENCES)
+        spanish_summary_service = SpanishSummaryService()
+        summary = spanish_summary_service.summarize(self.TEST_INPUT_SENTENCES)
         for sentence in self.OUTPUT_SUMMARY_SENTENCES:
             self.assertIn(sentence, summary)
         for sentence in self.OUTPUT_SUMMARY_EXCLUDED_SENTENCES:
