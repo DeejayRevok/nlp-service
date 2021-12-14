@@ -13,6 +13,7 @@ RUN apt-get install apt-transport-https -y
 RUN echo "deb https://artifacts.elastic.co/packages/7.x/apt stable main" | tee -a /etc/apt/sources.list.d/elastic-7.x.list
 RUN apt-get update
 RUN apt-get install git -y
+RUN apt-get install metricbeat
 
 RUN pip install --upgrade pip
 RUN pip install -r ./nlp_service/requirements-prod.txt
