@@ -39,7 +39,7 @@ def process_new_content(new: dict = None, **_):
 
 
 @CELERY_APP.app.task(name="summarize", base=ChainedTask)
-def summarize(language: str, nlp_doc: dict = None, **_):
+def summarize(language: str = None, nlp_doc: dict = None, **_):
     LOGGER.info("Generating summary")
 
     nlp_manager = container.get("nlp_manager")
@@ -57,7 +57,7 @@ def summarize(language: str, nlp_doc: dict = None, **_):
 
 
 @CELERY_APP.app.task(name="sentiment_analysis", base=ChainedTask)
-def sentiment_analysis(language: str, nlp_doc: dict = None, **_):
+def sentiment_analysis(language: str = None, nlp_doc: dict = None, **_):
     LOGGER.info("Generating sentiment score")
 
     nlp_manager = container.get("nlp_manager")
