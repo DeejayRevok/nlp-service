@@ -1,0 +1,34 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  abels:
+    app.kubernetes.io/name: nlp-service-new-saved-consumer
+  name: nlp-service-new-saved-consumer
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: nlp-service-new-saved-consumer
+  strategy: {}
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: nlp-service-new-saved-consumer
+    spec:
+      containers:
+      - envFrom:
+          - configMapRef:
+              name: nlp-service-configmap
+        image: 'djrevok/nlp-service:{{ .Chart.AppVersion }}'
+        imagePullPolicy: ""
+        name: nlp-service-new-saved-consumer
+        resources: {}
+        command:
+          - make
+          - run_kombu_event_consumer
+          - EVENT_NAME=event.new_saved
+          - CONSUMER_NAME=event_consumer.nlp_service.hydrate_new.new_saved
+      restartPolicy: Always
+      serviceAccountName: ""
+      volumes: null
+status: {}
