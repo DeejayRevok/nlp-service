@@ -1,7 +1,7 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  abels:
+  labels:
     app.kubernetes.io/name: nlp-service-new-saved-consumer
   name: nlp-service-new-saved-consumer
 spec:
