@@ -36,8 +36,9 @@ def load() -> None:
                 Argument.no_kw_argument(
                     "@bus_station.passengers.serialization.passenger_json_serializer.PassengerJSONSerializer"
                 ),
-                Argument.no_kw_argument("@bus_station.event_terminal.registry"
-                                        ".redis_event_registry.RedisEventRegistry"),
+                Argument.no_kw_argument(
+                    "@bus_station.event_terminal.registry" ".redis_event_registry.RedisEventRegistry"
+                ),
             ],
         )
     )
