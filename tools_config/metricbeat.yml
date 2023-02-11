@@ -30,7 +30,7 @@ setup.template.settings:
 
 # The name of the shipper that publishes the network data. It can be used to group
 # all the transactions sent by a single shipper in the web interface.
-name: nlp-celery-worker
+name: nlp-service
 
 # The tags of the shipper are included in their own field with each
 # transaction published.
@@ -64,7 +64,7 @@ setup.kibana:
   # Scheme and port can be left out and will be set to the default (http and 5601)
   # In case you specify and additional path, the scheme is required: http://localhost:5601/path
   # IPv6 addresses should always be defined as: https://[2001:db8::1]:5601
-  host: "kibana:5601"
+  host: ${NLP_SERVICE_KIBANA_HOST}
 
   # Kibana Space ID
   # ID of the Kibana Space into which the dashboards should be loaded. By default,
@@ -91,7 +91,7 @@ setup.kibana:
 #-------------------------- Elasticsearch output ------------------------------
 output.elasticsearch:
   # Array of hosts to connect to.
-  hosts: ["elasticsearch:9200"]
+  hosts: ${NLP_SERVICE_ELASTICSEARCH_HOSTS}
 
   # Protocol - either `http` (default) or `https`.
   #protocol: "https"

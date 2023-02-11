@@ -11,41 +11,27 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - uses: actions/checkout@v2
-      - name: Set up Python 3.8
-        uses: actions/setup-python@v1
-        with:
-          python-version: 3.8
-      - name: Install dependencies
-        run: |
-          pip install --upgrade pip
-          pip install -r requirements-dev.txt
-          pip install -r requirements-prod.txt
-      - name: Check formatting
-        run: tox -e black -- --check
-      - name: Check style
-        run: tox -e flake8
-      - name: Test with unittest
-        run: tox -e tests
-      - name: Check test coverage
-        run: tox -e coverage_check
-      - name: Generate coverage report
-        run: tox -e coverage_report
-      - name: Codecov upload
-        uses: codecov/codecov-action@v1.0.5
-        with:
-          token: ${{ secrets.CODECOV_TOKEN }}
-          file: coverage_nlp_service.xml
-      - name: Build the docker image
-        run: docker build -t djrevok/nlp-celery-worker:latest .
-      - name: Login to docker hub
-        if: github.ref == 'refs/heads/develop'
-        uses: actions-hub/docker/login@master
-        env:
-          DOCKER_USERNAME: ${{ secrets.DOCKER_USER }}
-          DOCKER_PASSWORD: ${{ secrets.DOCKER_PASSWORD }}
-      - name: Publish docker image
-        if: github.ref == 'refs/heads/develop'
-        uses: actions-hub/docker@master
-        with:
-          args: push djrevok/nlp-celery-worker:latest
+    - uses: actions/checkout@v2
+    - name: Setup env
+      run: cp .env.example .env
+    - name: Check formatting
+      run: docker-compose run nlp-service tox -e black -- --check
+    - name: Check style
+      run: docker-compose run nlp-service tox -e flake8
+    - name: Test with unittest
+      run: docker-compose run nlp-service tox -e tests
+    - name: Generate coverage report
+      run: docker-compose run nlp-service tox -e coverage_report
+    - name: Build the docker image
+      run: docker build -t djrevok/nlp-service:latest .
+    - name: Login to docker hub
+      if: github.ref == 'refs/heads/develop'
+      uses: actions-hub/docker/login@master
+      env:
+        DOCKER_USERNAME: ${{ secrets.DOCKER_USER }}
+        DOCKER_PASSWORD: ${{ secrets.DOCKER_PASSWORD }}
+    - name: Publish docker image
+      if: github.ref == 'refs/heads/develop'
+      uses: actions-hub/docker@master
+      with:
+        args: push djrevok/nlp-service:latest
