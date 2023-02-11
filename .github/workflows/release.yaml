@@ -18,7 +18,7 @@ jobs:
           echo "Version: $VERSION"
           echo "::set-output name=version::$VERSION"
       - name: Build the docker image
-        run: docker build -t djrevok/nlp-celery-worker:${{ steps.get_version.outputs.version }} .
+        run: docker build -t djrevok/nlp-service:${{ steps.get_version.outputs.version }} .
       - name: Login to docker hub
         uses: actions-hub/docker/login@master
         env:
@@ -27,7 +27,7 @@ jobs:
       - name: Publish docker image
         uses: actions-hub/docker@master
         with:
-            args: push djrevok/nlp-celery-worker:${{ steps.get_version.outputs.version }}
+            args: push djrevok/nlp-service:${{ steps.get_version.outputs.version }}
       - name: Setup helm
         uses: azure/setup-helm@v1
       - name: Build helm chart
