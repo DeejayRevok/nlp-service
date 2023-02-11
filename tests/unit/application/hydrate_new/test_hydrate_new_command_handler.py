@@ -21,11 +21,7 @@ class TestHydrateNewCommandHandler(TestCase):
         self.new_hydrater_mock = Mock(spec=NewHydrater)
         self.event_bus_mock = Mock(spec=EventBus)
         self.logger_mock = Mock(spec=Logger)
-        self.command_handler = HydrateNewCommandHandler(
-            self.new_hydrater_mock,
-            self.event_bus_mock,
-            self.logger_mock
-        )
+        self.command_handler = HydrateNewCommandHandler(self.new_hydrater_mock, self.event_bus_mock, self.logger_mock)
 
     def test_handle_success(self):
         test_command = HydrateNewCommand(
@@ -35,7 +31,7 @@ class TestHydrateNewCommandHandler(TestCase):
             source="test_source",
             date=42432.89,
             language="english",
-            image="test_image"
+            image="test_image",
         )
 
         self.command_handler.handle(test_command)
@@ -49,7 +45,7 @@ class TestHydrateNewCommandHandler(TestCase):
                 date=42432.89,
                 language=Language.ENGLISH,
                 image="test_image",
-                hydrated=False
+                hydrated=False,
             )
         )
         self.event_bus_mock.transport.assert_called_once_with(
@@ -62,6 +58,6 @@ class TestHydrateNewCommandHandler(TestCase):
                 language="english",
                 image="test_image",
                 entities=[],
-                hydrated=False
+                hydrated=False,
             )
         )

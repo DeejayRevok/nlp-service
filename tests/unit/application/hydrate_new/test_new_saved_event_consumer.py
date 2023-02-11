@@ -11,9 +11,7 @@ from application.hydrate_new.new_saved_event_consumer import NewSavedEventConsum
 class TestNewSavedEventConsumer(TestCase):
     def setUp(self) -> None:
         self.command_bus_mock = Mock(spec=CommandBus)
-        self.event_consumer = NewSavedEventConsumer(
-            self.command_bus_mock
-        )
+        self.event_consumer = NewSavedEventConsumer(self.command_bus_mock)
 
     def test_consume_hydrated(self):
         test_event = NewSavedEvent(
@@ -24,7 +22,7 @@ class TestNewSavedEventConsumer(TestCase):
             date=323123112.0,
             language="test_new_language",
             hydrated=True,
-            image="test_image"
+            image="test_image",
         )
 
         self.event_consumer.consume(test_event)
@@ -40,7 +38,7 @@ class TestNewSavedEventConsumer(TestCase):
             date=323123112.0,
             language="test_new_language",
             hydrated=False,
-            image="test_image"
+            image="test_image",
         )
 
         self.event_consumer.consume(test_event)
@@ -53,6 +51,6 @@ class TestNewSavedEventConsumer(TestCase):
                 source="test_new_source",
                 date=323123112.0,
                 language="test_new_language",
-                image="test_image"
+                image="test_image",
             )
         )

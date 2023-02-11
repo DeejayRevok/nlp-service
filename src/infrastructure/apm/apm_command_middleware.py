@@ -13,8 +13,9 @@ class APMCommandMiddleware(CommandMiddleware):
     def before_handle(self, passenger: Command, bus_stop: CommandHandler) -> None:
         self.__apm_client.begin_transaction("command")
 
-    def after_handle(self, passenger: Command, bus_stop: CommandHandler,
-                     handling_exception: Optional[Exception] = None) -> None:
+    def after_handle(
+        self, passenger: Command, bus_stop: CommandHandler, handling_exception: Optional[Exception] = None
+    ) -> None:
         transaction_result = "success"
         if handling_exception is not None:
             transaction_result = "error"

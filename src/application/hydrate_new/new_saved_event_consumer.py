@@ -12,10 +12,8 @@ class NewSavedEventConsumer(EventConsumer):
     def consume(self, event: NewSavedEvent) -> None:
         if event.hydrated is True:
             return
-        
-        self.__command_bus.transport(
-            self.__create_command_from_event(event)
-        )
+
+        self.__command_bus.transport(self.__create_command_from_event(event))
 
     def __create_command_from_event(self, event: NewSavedEvent) -> HydrateNewCommand:
         return HydrateNewCommand(
@@ -25,7 +23,7 @@ class NewSavedEventConsumer(EventConsumer):
             source=event.source,
             date=event.date,
             language=event.language,
-            image=event.image
+            image=event.image,
         )
 
     @classmethod

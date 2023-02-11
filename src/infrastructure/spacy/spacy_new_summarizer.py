@@ -49,7 +49,9 @@ class SpacyNewSummarizer(NewSummarizer):
         return " ".join(summarize_text_sentences)
 
     def __get_sentence_semantic_value(self, sentence: Span) -> float:
-        token_semantic_values = [self.__get_token_semantic_value(token) for token in self.__get_sentence_tokens(sentence)]
+        token_semantic_values = [
+            self.__get_token_semantic_value(token) for token in self.__get_sentence_tokens(sentence)
+        ]
         return mean(token_semantic_values)
 
     def __get_sentence_tokens(self, sentence: Span) -> Iterable[Token]:
@@ -82,13 +84,13 @@ class SpacyNewSummarizer(NewSummarizer):
         return summary_sentences_num
 
     def __clean_qualifiers(
-            self,
-            qualifiers: List[int],
-            non_qualifiers: List[int],
-            sentences_similarity_matrix: np.ndarray,
-            sentences_semantic_values: List[float],
+        self,
+        qualifiers: List[int],
+        non_qualifiers: List[int],
+        sentences_similarity_matrix: np.ndarray,
+        sentences_semantic_values: List[float],
     ):
-        qualifiers_similarity_matrix = sentences_similarity_matrix[np.ix_(qualifiers,qualifiers)]
+        qualifiers_similarity_matrix = sentences_similarity_matrix[np.ix_(qualifiers, qualifiers)]
         similar_qualifiers_idxs = self.__get_most_similar_above_threshold(qualifiers_similarity_matrix)
         if len(non_qualifiers) > 0 and len(similar_qualifiers_idxs) > 0:
             new_qualifiers = []
@@ -98,7 +100,12 @@ class SpacyNewSummarizer(NewSummarizer):
                 if len(non_qualifiers) == 0:
                     break
 
-                if idx1 in discarded_idxs or idx2 in discarded_idxs or idx1 in qualifying_qualifier_idxs or idx2 in qualifying_qualifier_idxs:
+                if (
+                    idx1 in discarded_idxs
+                    or idx2 in discarded_idxs
+                    or idx1 in qualifying_qualifier_idxs
+                    or idx2 in qualifying_qualifier_idxs
+                ):
                     continue
 
                 if sentences_semantic_values[qualifiers[idx1]] >= sentences_semantic_values[qualifiers[idx2]]:

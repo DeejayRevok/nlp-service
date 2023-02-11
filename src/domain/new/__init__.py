@@ -9,9 +9,13 @@ def load() -> None:
             "domain.new.new_hydrater.NewHydrater",
             "domain.new.new_hydrater.NewHydrater",
             [
-                Argument.no_kw_argument("@infrastructure.spacy.spacy_new_named_entities_extractor.SpacyNewNamedEntitiesExtractor"),
+                Argument.no_kw_argument(
+                    "@infrastructure.spacy.spacy_new_named_entities_extractor.SpacyNewNamedEntitiesExtractor"
+                ),
                 Argument.no_kw_argument("@infrastructure.spacy.spacy_new_summarizer.SpacyNewSummarizer"),
-                Argument.no_kw_argument("@infrastructure.spacy.spacy_new_sentiment_analyzer_selector.SpacyNewSentimentAnalyzerSelector")
-            ]
+                Argument.no_kw_argument(
+                    "@infrastructure.spacy.spacy_new_sentiment_analyzer_selector.SpacyNewSentimentAnalyzerSelector"
+                ),
+            ],
         )
     )
