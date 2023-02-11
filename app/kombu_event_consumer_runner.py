@@ -15,10 +15,12 @@ def run() -> None:
     engine = KombuEventBusEngine(
         container_builder.get("kombu.connection.Connection"),
         container_builder.get("bus_station.event_terminal.registry.redis_event_registry.RedisEventRegistry"),
-        container_builder.get("bus_station.event_terminal.middleware.event_middleware_receiver.EventMiddlewareReceiver"),
+        container_builder.get(
+            "bus_station.event_terminal.middleware.event_middleware_receiver.EventMiddlewareReceiver"
+        ),
         PassengerJSONDeserializer(),
         args["event"],
-        args["consumer"]
+        args["consumer"],
     )
     SelfProcessEngineRunner(engine).run()
 

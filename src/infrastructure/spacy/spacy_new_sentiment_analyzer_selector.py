@@ -8,9 +8,9 @@ from infrastructure.spacy.spacy_spanish_new_sentiment_analyzer import SpacySpani
 
 class SpacyNewSentimentAnalyzerSelector(NewSentimentAnalyzerSelector):
     def __init__(
-            self,
-            spanish_sentiment_analyzer: SpacySpanishNewSentimentAnalyzer,
-            english_sentiment_analyzer: NLTKVADEREnglishNewSentimentAnalyzer
+        self,
+        spanish_sentiment_analyzer: SpacySpanishNewSentimentAnalyzer,
+        english_sentiment_analyzer: NLTKVADEREnglishNewSentimentAnalyzer,
     ):
         self.__spanish_sentiment_analyzer = spanish_sentiment_analyzer
         self.__english_sentiment_analyzer = english_sentiment_analyzer

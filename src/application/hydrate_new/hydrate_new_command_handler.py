@@ -39,7 +39,7 @@ class HydrateNewCommandHandler(CommandHandler):
             entities=new.entities,
             summary=new.summary,
             sentiment=new.sentiment,
-            image=new.image
+            image=new.image,
         )
 
     def __create_new_from_command(self, command: HydrateNewCommand) -> New:
@@ -51,7 +51,7 @@ class HydrateNewCommandHandler(CommandHandler):
             date=command.date,
             language=Language(command.language),
             hydrated=False,
-            image=command.image
+            image=command.image,
         )
 
     @classmethod

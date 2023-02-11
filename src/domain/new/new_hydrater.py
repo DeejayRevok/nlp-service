@@ -6,10 +6,10 @@ from domain.new.new_summarizer import NewSummarizer
 
 class NewHydrater:
     def __init__(
-            self,
-            new_named_entities_extractor: NewNamedEntitiesExtractor,
-            new_summarizer: NewSummarizer,
-            new_sentiment_analyzer_selector: NewSentimentAnalyzerSelector
+        self,
+        new_named_entities_extractor: NewNamedEntitiesExtractor,
+        new_summarizer: NewSummarizer,
+        new_sentiment_analyzer_selector: NewSentimentAnalyzerSelector,
     ):
         self.__new_named_entities_extractor = new_named_entities_extractor
         self.__new_summarizer = new_summarizer

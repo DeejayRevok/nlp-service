@@ -17,25 +17,21 @@ class TestNewHydrater(TestCase):
         self.new_summarizer_mock = Mock(spec=NewSummarizer)
         self.new_sentiment_analyzer_selector_mock = Mock(spec=NewSentimentAnalyzerSelector)
         self.new_hydrater = NewHydrater(
-            self.new_named_entities_extractor_mock,
-            self.new_summarizer_mock,
-            self.new_sentiment_analyzer_selector_mock
+            self.new_named_entities_extractor_mock, self.new_summarizer_mock, self.new_sentiment_analyzer_selector_mock
         )
 
     def test_hydrate_success(self):
         test_new = New(
-                title="test_title",
-                url="test_url",
-                content="test_content",
-                source="test_source",
-                date=42432.89,
-                language=Language.ENGLISH,
-                image="test_image",
-                hydrated=False
+            title="test_title",
+            url="test_url",
+            content="test_content",
+            source="test_source",
+            date=42432.89,
+            language=Language.ENGLISH,
+            image="test_image",
+            hydrated=False,
         )
-        test_named_entity = NamedEntity(
-            text="test_named_entity", type="test_named_entity_type"
-        )
+        test_named_entity = NamedEntity(text="test_named_entity", type="test_named_entity_type")
         self.new_named_entities_extractor_mock.extract.return_value = [test_named_entity, test_named_entity]
         test_sentiment_analyzer = Mock(spec=NewSentimentAnalyzer)
         test_sentiment_analyzer.analyze.return_value = 12.34
