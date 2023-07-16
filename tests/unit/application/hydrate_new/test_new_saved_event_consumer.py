@@ -1,5 +1,5 @@
 from unittest import TestCase
-from unittest.mock import Mock
+from unittest.mock import Mock, patch
 
 from application.hydrate_new.hydrate_new_command import HydrateNewCommand
 from bus_station.command_terminal.bus.command_bus import CommandBus
@@ -13,7 +13,8 @@ class TestNewSavedEventConsumer(TestCase):
         self.command_bus_mock = Mock(spec=CommandBus)
         self.event_consumer = NewSavedEventConsumer(self.command_bus_mock)
 
-    def test_consume_hydrated(self):
+    @patch("bus_station.passengers.passenger.uuid4")
+    def test_consume_hydrated(self, *_):
         test_event = NewSavedEvent(
             title="test_new",
             url="test_new_url",
@@ -29,7 +30,8 @@ class TestNewSavedEventConsumer(TestCase):
 
         self.command_bus_mock.transport.assert_not_called()
 
-    def test_consume_non_hydrated(self):
+    @patch("bus_station.passengers.passenger.uuid4")
+    def test_consume_non_hydrated(self, *_):
         test_event = NewSavedEvent(
             title="test_new",
             url="test_new_url",

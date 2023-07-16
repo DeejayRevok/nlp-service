@@ -10,7 +10,7 @@ from app.loaders.buses.command.middlewares_loader import load as load_command_bu
 from app.loaders.buses.event.middlewares_loader import load as load_event_bus_middlewares
 
 
-def load() -> None:
+def load_app() -> None:
     load_logger()
     load_redis()
     load_rabbitmq()
