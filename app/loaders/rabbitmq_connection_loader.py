@@ -4,7 +4,8 @@ from bus_station.shared_terminal.broker_connection.connection_parameters.rabbitm
     RabbitMQConnectionParameters,
 )
 from bus_station.shared_terminal.factories.kombu_connection_factory import KombuConnectionFactory
-from pypendency.builder import container_builder
+from kombu.connection import Connection
+from yandil.container import default_container
 
 
 def load() -> None:
@@ -16,4 +17,4 @@ def load() -> None:
         host=rabbitmq_host, port=rabbitmq_port, username=rabbitmq_user, password=rabbitmq_password, vhost="/"
     )
     rabbitmq_connection = KombuConnectionFactory().get_connection(rabbitmq_connection_parameters)
-    container_builder.set("kombu.connection.Connection", rabbitmq_connection)
+    default_container[Connection] = rabbitmq_connection

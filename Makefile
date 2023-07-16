@@ -4,4 +4,4 @@ build_chart:
 run_kombu_event_consumer:
 	nohup metricbeat -e -c /etc/metricbeat/metricbeat.yml &
 	nohup filebeat -e -c /etc/filebeat/filebeat.yml &
-	python app/kombu_event_consumer_runner.py -e $(EVENT_NAME) -c $(CONSUMER_NAME)
+	python app/kombu_event_consumer_runner.py -c $(CONSUMER_NAME)

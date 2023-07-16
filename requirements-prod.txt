@@ -6,7 +6,7 @@ nltk==3.6.6
 networkx==2.4
 spacy==3.4.2
 elastic-apm==6.0.0
-pypendency==0.1.0
 dacite==1.6.0
 python-json-logger==2.0.4
-bus-station==4.0.0
+bus-station==7.0.0
+yandil==0.3.3

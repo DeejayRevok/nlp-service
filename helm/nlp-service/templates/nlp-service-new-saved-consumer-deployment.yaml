@@ -26,7 +26,6 @@ spec:
         command:
           - make
           - run_kombu_event_consumer
-          - EVENT_NAME=event.new_saved
           - CONSUMER_NAME=event_consumer.nlp_service.hydrate_new.new_saved
       restartPolicy: Always
       serviceAccountName: ""
